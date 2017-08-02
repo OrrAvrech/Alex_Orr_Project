@@ -53,18 +53,11 @@ subplot 212
 imshow(x2) ;
 % ICA
 [A,W] = fastica(x) ;
-s_est = W * double(x) ;
+s_est = W * x ;
 s_est1 = reshape(s_est(1,:), 256, 256) ;
 s_est2 = reshape(s_est(2,:), 256, 256) ;
 figure(3) ;
 subplot 211
-imshow(s_est1) ;
+imagesc(s_est1) ;
 subplot 212
-imshow(s_est2) ;
-
-
-
-
-
-
-
+imagesc(s_est2) ;
