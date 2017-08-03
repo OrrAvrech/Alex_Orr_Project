@@ -41,7 +41,7 @@ lambda             = 670e-9;                   % Imaging wavelength
 %% Create figures with different z values and combine
 NumOfEmitters     = 2;      % Per layer
 ZposIndex         = [1 11]; % Planes along z to take from
-NumFrames         = 3;      % Number of frames in the movie
+NumFrames         = 4;      % Number of frames in the movie
 
 % Flags (all binaries)
 ApplyBlinkingFlag = 1; % If 1, then each isolated emitter is multiplied by a random number to simulate blinking
