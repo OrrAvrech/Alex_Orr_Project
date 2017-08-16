@@ -1,0 +1,227 @@
+#LyX 2.2 created this file. For more info see http://www.lyx.org/
+\lyxformat 508
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 1cm
+\rightmargin 1cm
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+AOP Notes
+\end_layout
+
+\begin_layout Author
+Alex Finkelshtein, Orr Avrech
+\end_layout
+
+\begin_layout Section*
+1.
+ ICA Model
+\end_layout
+
+\begin_layout Standard
+Blind Source Separation problem:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+x=As
+\]
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Formula $x$
+\end_inset
+
+ is 
+\begin_inset Formula $T\times M^{2},$
+\end_inset
+
+ where 
+\begin_inset Formula $T$
+\end_inset
+
+ is the number of frames taken and 
+\begin_inset Formula $M^{2}$
+\end_inset
+
+ is the image size.
+ 
+\begin_inset Formula $A$
+\end_inset
+
+ is the mixing matrix with dimensions 
+\begin_inset Formula $n\times T,$
+\end_inset
+
+ for 
+\begin_inset Formula $n$
+\end_inset
+
+ being the number of sources.
+ Notice that,
+\begin_inset Formula 
+\[
+n=\#z_{planes}\cdot\#e_{per.plane}
+\]
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Formula $s$
+\end_inset
+
+ is a 
+\begin_inset Formula $n\times M^{2}$
+\end_inset
+
+ matrix.
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Formula $W=A^{-1}$
+\end_inset
+
+ is the unmixing matrix.
+\begin_inset Formula 
+\[
+W=\left(\begin{array}{ccc}
+- & \omega_{1}^{T} & -\\
+ & \vdots\\
+- & \omega_{i}^{T} & -\\
+ & \vdots\\
+- & \omega_{n}^{T} & -
+\end{array}\right)
+\]
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+Such that,
+\begin_inset Formula 
+\[
+s_{i}^{\left(j\right)}=\omega_{i}^{T}x^{\left(j\right)}
+\]
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Formula $s_{i}^{\left(j\right)}$
+\end_inset
+
+is a scalar and represents a pixel 
+\begin_inset Formula $j$
+\end_inset
+
+ of source 
+\begin_inset Formula $i$
+\end_inset
+
+.
+ 
+\begin_inset Formula $\omega_{i}^{T}$
+\end_inset
+
+ is a weights vector of source 
+\begin_inset Formula $i$
+\end_inset
+
+ in all frames.
+ 
+\begin_inset Formula $x^{\left(j\right)}$
+\end_inset
+
+is a vector of pixel 
+\begin_inset Formula $j$
+\end_inset
+
+ in all frames.
+\end_layout
+
+\end_body
+\end_document
