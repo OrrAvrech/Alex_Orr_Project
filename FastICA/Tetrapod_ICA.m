@@ -1,26 +1,35 @@
-clc; clear all; close all;
-%% Load linear combination from Tetrapod
-load('..\TetrapodPSF\Sequence2.mat');
-
+function [ IC ] = Tetrapod_ICA(IC_num,lin_comb)
 %% Mixed Sources Matrix
-size_lincomb = size(Sequence2.LinearCombinations) ;
+size_lincomb = size(lin_comb) ;
 x = zeros(size_lincomb(3), size_lincomb(1)*size_lincomb(2)) ;
 for i=1:size_lincomb(3)
-    x(i,:) = reshape(Sequence2.LinearCombinations(:,:,i), 1, []) ;
+    x(i,:) = reshape(lin_comb(:,:,i), 1, []) ;
 end
+
 %% Movie
-for i=1:size_lincomb(3)
-    imagesc(Sequence2.LinearCombinations(:,:,i));
-    pause (1) ;
+if exist(movie_flag) == 1 %movie_flag global
+    show_movie = movie_flag;
+else
+    show_movie = 0;
+end
+if show_movie == 1
+    for i=1:size_lincomb(3)
+        imagesc(Sequence2.LinearCombinations(:,:,i));
+        pause (1) ;
+    end
 end
 %% FastICA -- to obtain Mixing_mat and original sources
-num_planes = 2;
-[A,W] = fastica(x, 'numOfIC', num_planes) ;
+% num_planes = size_lincomb(3);
+% num_emitters = IC_num;
+% num_sources = num_planes * num_emitters;
+
+[A,W] = fastica(x, 'numOfIC', IC_num) ;
 s = W * x;
-s_img_mat = zeros(size_lincomb(1), size_lincomb(2), num_planes);
-for j=1:num_planes
+s_img_mat = zeros(size_lincomb(1), size_lincomb(2), IC_num);
+for j=1:num_sources
     s_img_mat(:,:,j) = reshape(s(j,:), size_lincomb(1), size_lincomb(2));
-    figure(j);
-    imagesc(s_img_mat(:,:,j));
+%     figure(j);
+%     imagesc(s_img_mat(:,:,j));
 end
-    
+IC = s_img_mat;
+end

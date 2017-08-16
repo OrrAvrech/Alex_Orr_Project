@@ -1,6 +1,8 @@
-clc;
-clear;
-close all;
+function [ Sequence ] = TetrapodGenerator( x_cell, y_cell, n, NumFrames )
+
+% Receives emitter locations (x,y), num of z planes and num of frames
+% Outputs Tetrapod Sequence
+
 
 rng(33545);
 
@@ -11,7 +13,7 @@ load('SPmask4um.mat','maskBest');
 
 %% Set parameters for the tetrapod PSF generation, per each z plane
 nomFocusVec        = 0;                        % focal plane (0 = interface)
-n                  = 10;                       % n+1 is the number of z planes
+% n                  = 10;                       % n+1 is the number of z planes
 zVec               = linspace(-2e-6,2e-6,n+1); % z positions of emitter
 pupil1.bfpField    = maskBest;                 % phase mask
 pupil1.maskDiam_m  = 4.2e-3;                   % phase mask diameter in meters
@@ -39,9 +41,14 @@ lambda             = 670e-9;                   % Imaging wavelength
 % end
 
 %% Create figures with different z values and combine
-NumOfEmitters     = 1;      % Per layer
-ZposIndex         = [1]; % Planes along z to take from
-NumFrames         = 2;      % Number of frames in the movie
+
+%%%%%%%%%%%%%%%%%%%%%%% Function Parameters %%%%%%%%%%%%%%%%%%%%%
+% NumOfEmitters     = 3;      % Per layer
+% ZposIndex         = [1]; % Planes along z to take from
+% NumFrames         = 4;      % Number of frames in the movie
+
+ZposIndex        = 1:n; % Planes along z to take from
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Flags (all binaries)
 ApplyBlinkingFlag = 1; % If 1, then each isolated emitter is multiplied by a random number to simulate blinking
@@ -67,12 +74,16 @@ kk = 1;
 % For each z layer
 for ii = 1:length(ZposIndex)
     % Generate a random number of emitters for each layer
+    %%%%%%%%%%%%%%%%%%%%%%% Function Parameters %%%%%%%%%%%%%%%%%%%%%%%
 %     x = (rand(NumOfEmitters, 1)-0.5)*10e-6; % x position of emitter (random)
 %     y = (rand(NumOfEmitters, 1)-0.5)*10e-6; % y position of emitter (random)
-    x = 25*10e-6;
-    y = 25*10e-6;
+      x = x_cell{ii};
+      y = y_cell{ii};
+      NumOfEmitters = numel(x_cell{ii});  % Per Layer
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
     % For each frame in the movie
-    for FrameInd = 1:NumFrames;
+    for FrameInd = 1:NumFrames
         % Generate blinking pattern
         if ApplyBlinkingFlag
             BlinkingVec = rand(NumOfEmitters, 1);
@@ -141,9 +152,14 @@ Sequence.ImPlaneZ           = ImPlaneZ;
 Sequence2 = Sequence;
 
 % Save as mat
-save Sequence2 Sequence2
+% save Sequence2 Sequence2
 
 
 
 
+
+
+
+
+end
 
