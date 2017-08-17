@@ -33,3 +33,20 @@ imagesIC_flag = 1;
 BlinkMovie_flag = 1;
 
 Visualize_Sources(Sequence2.LinearCombinations, IC, imagesIC_flag, BlinkMovie_flag);
+
+%% Get results error rate
+% x_orig = zeros(1,sum(cellfun('length',x_cell))); %preallocate
+% y_orig = zeros(1,sum(cellfun('length',x_cell)));
+x_orig = [];
+y_orig = [];
+for i = 1:size(x_cell,2) %%cell to vec
+    curr_x = cell2mat(x_cell(i));
+    curr_y = cell2mat(y_cell(i)');
+    el_num = numel(curr_x);
+    x_orig(end+(1:el_num)) =  curr_x;
+    y_orig(end+(1:el_num)) =  curr_y;
+
+end
+
+
+error_rate = ICA_acc( x_orig, y_orig, IC )
