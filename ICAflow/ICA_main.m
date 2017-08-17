@@ -1,9 +1,9 @@
 clc; close all; clear all;
 %% Generate Tetrapod for random (x,y) emitter locations
 
-num_planes = 2;
+num_planes = 3;
 
-num_emitters_vec = [3, 4]; % num_planes length
+num_emitters_vec = [1, 2, 1]; % num_planes length
 % Ordinarily will be computed from Simulate_Emitters
 
 x_cell = cell(1,num_planes);
@@ -15,16 +15,21 @@ end
 
 num_sources = sum(num_emitters_vec);
 NumFrames = 6;
-if NumFrames < num_sources
-    NumFrames = num_sources + 1;
+if NumFrames <= num_sources
+    NumFrames = num_sources + 1; %NumFrames minimal value
 end
 
-original_path = pwd;
-script_full_path = mfilename('fullpath'); %file path
-[upperPath,~] = fileparts(script_full_path); %gets current folder path
-cd (upperPath)
-cd('..\TetrapodPSF\');
-
+original_path = cdir('..\TetrapodPSF\');
 Sequence2 = TetrapodGenerator(x_cell, y_cell, num_planes, NumFrames);
-
 cd (original_path);
+
+%% Run FastICA
+
+IC = Tetrapod_ICA(num_sources, Sequence2.LinearCombinations);
+
+%% Visualize ICA Input and Output
+
+imagesIC_flag = 1;
+BlinkMovie_flag = 1;
+
+Visualize_Sources(Sequence2.LinearCombinations, IC, imagesIC_flag, BlinkMovie_flag);

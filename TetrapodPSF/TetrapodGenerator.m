@@ -90,7 +90,7 @@ for ii = 1:length(ZposIndex)
         else
             BlinkingVec = ones(NumOfEmitters, 1);
         end
-        Sequence.BlinkingVec(:, kk) = BlinkingVec;
+        %Sequence.BlinkingVec(:, kk) = BlinkingVec;
         
         % Generate each frame: Generate tetrapod PSF for each emitter (per z layer, per frame)
         % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
