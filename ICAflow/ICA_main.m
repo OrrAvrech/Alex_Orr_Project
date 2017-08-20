@@ -21,6 +21,7 @@ end
 
 original_path = cdir('..\TetrapodPSF\');
 Sequence2 = TetrapodGenerator(x_cell, y_cell, num_planes, NumFrames);
+%sequence = TetrapodGenerator(num2cell(x_orig(1)), num2cell(y_orig(1)), 1, 1)
 cd (original_path);
 
 %% Run FastICA
@@ -29,8 +30,8 @@ IC = Tetrapod_ICA(num_sources, Sequence2.LinearCombinations);
 
 %% Visualize ICA Input and Output
 
-imagesIC_flag = 1;
-BlinkMovie_flag = 1;
+imagesIC_flag = 0;
+BlinkMovie_flag = 0;
 
 Visualize_Sources(Sequence2.LinearCombinations, IC, imagesIC_flag, BlinkMovie_flag);
 
@@ -45,8 +46,8 @@ for i = 1:size(x_cell,2) %%cell to vec
     el_num = numel(curr_x);
     x_orig(end+(1:el_num)) =  curr_x;
     y_orig(end+(1:el_num)) =  curr_y;
-
 end
 
 
 error_rate = ICA_acc( x_orig, y_orig, IC )
+
