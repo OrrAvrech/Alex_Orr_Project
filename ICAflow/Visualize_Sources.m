@@ -6,8 +6,8 @@ function [ ] = Visualize_Sources( seq_lincomb, IC, imagesIC_flag, BlinkMovie_fla
 %% Blinking Movie (ICA input visualization)
 
 if BlinkMovie_flag == 1
-    size_lincomb = size(seq_lincomb);
-    NumFrames = size_lincomb(3);
+    size_lincomb = size(seq_lincomb, 3);
+    NumFrames = size_lincomb;
     for i=1 : NumFrames
         imagesc(seq_lincomb(:,:,i));
         pause (1) ;
@@ -17,8 +17,8 @@ end
 %% Estimated Source (ICA output visualization)
 
 if imagesIC_flag == 1
-    size_IC = size(IC);
-    num_sources = size_IC(3);
+    size_IC = size(IC, 3);
+    num_sources = size_IC;
     for j=1 : num_sources
         figure(j);
         imagesc(IC(:,:,j));

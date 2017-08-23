@@ -26,8 +26,8 @@ gBlur              = 0.5;                      % extra PSF blur factor
 FOV_r              = 200;                      % Field of view of the image. Measured in #pixels and assumed squared image
 n1                 = 1.518;                    % ref index
 n2                 = n1;                       % ???
-nPhotons           = 1000;                     % signal photons
-bg                 = 2;                        % background photons per pixel
+nPhotons           = 2000;                     % signal photons
+bg                 = 28;                        % background photons per pixel
 lambda             = 670e-9;                   % Imaging wavelength
 
 % %% Image generator
@@ -80,6 +80,10 @@ for ii = 1:length(ZposIndex)
       x = x_cell{ii};
       y = y_cell{ii};
       NumOfEmitters = numel(x_cell{ii});  % Per Layer
+      
+      if NumOfEmitters == 0
+          continue;
+      end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     % For each frame in the movie
