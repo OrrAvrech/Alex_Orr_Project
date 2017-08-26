@@ -2,7 +2,7 @@ clc; close all; clear all;
 %% Generate Tetrapod for random (x,y) emitter locations
 
 
-num_emitters_vec = [2 0 0 1 0 0 0 1 1]; % num_planes length
+num_emitters_vec = [6]; % num_planes length
 zPosidx = find(num_emitters_vec);
 z_orig = [];
 for jj = 1 : numel(zPosidx)
@@ -20,6 +20,14 @@ for i = 1:num_planes
     x_cell{i} = (rand(num_emitters_vec(i), 1)-0.5)*10e-6;
     y_cell{i} = (rand(num_emitters_vec(i), 1)-0.5)*10e-6;
 end
+x_orig = cell2vec(x_cell);
+y_orig = cell2vec(y_cell);
+z_xy_orig = cell(1,num_planes);
+for ii = 1:size(z_orig,2)
+    next_row_ind = size(z_xy_orig{z_orig(ii)},1)+1;
+    z_xy_orig{z_orig(ii)}(next_row_ind,1:2) = [x_orig(ii),y_orig(ii)];
+end
+
 
 num_sources = sum(num_emitters_vec);
 NumFrames = 2;
@@ -76,5 +84,6 @@ figure(3);imshow(I); hold on;
 % figure(3);plot(curr_x,curr_y,'ro')
 % title('ICA image Mass Center Estimation')
 
-%% Test error rate
-[error, inds] = error_rate(cell2vec(x_cell), cell2vec(y_cell), z_orig, IC, 'euc_dist', num_planes, 1);
+%% Test error rate by Criterion
+[error, inds] = error_rate(z_xy_orig, IC, 'euc_dist', num_planes, 1);
+total_result = sum(error)
