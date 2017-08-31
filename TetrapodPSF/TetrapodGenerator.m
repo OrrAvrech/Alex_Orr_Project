@@ -158,12 +158,5 @@ Sequence2 = Sequence;
 % Save as mat
 % save Sequence2 Sequence2
 
-
-
-
-
-
-
-
 end
 
