@@ -2,21 +2,22 @@ clc; close all;
 %% Set parameters for data generator
 
 NumZplanes  = 20;                                 
-NumSamples  = 10000;                               % numer of rand and param. points
+NumSamples  = 1000;                               % numer of rand and param. points
 zVec        = linspace(-2e-6, 2e-6, NumZplanes+1); % z positions of emitter
 t           = linspace(-4e-6, 4e-6, NumSamples);   % scaled according to zVec
-xt          = 2e-6*cos((10*pi)/(4e-6)*t);
-yt          = 2e-6*sin((10*pi)/(4e-6)*t);
+xt          = 2e-6*cos((30*pi)/(4e-6)*t);
+yt          = 2e-6*sin((30*pi)/(4e-6)*t);
 zt          = t;
 MatchErr    = 0.5e-6;                              % param. and lottery points error
 
-vslz_ParamAndRand = 0;                             % plot param. and rand points when 1 
-vslz_MatchPts     = 0;                             % plot matched points when 1
-vslz_Emitters     = 0;                             % plot chosen emitters when 1
+vslz_ParamAndRand = 1;                             % plot param. and rand points when 1 
+vslz_MatchPts     = 1;                             % plot matched points when 1
+vslz_Emitters     = 1;                             % plot chosen emitters when 1
 
-flag_Save2File    = 1;                             % append EmittersObj
+flag_Save2File    = 0;                             % append EmittersObj
                                                    % to DataObjects.mat
-                                                   % when 1
+                                                   % when 1. Save2File at
+                                                   % end of process
 
 %% Allow Repetitions
 % acquire different values of random xyz in each iteration
@@ -74,12 +75,13 @@ if vslz_MatchPts == 1
 end
 
 %% Separate to z-planes and obtain emitters
+
 % x_cell and y_cell are the emitters locations in each z-plane
 % e.g (x_cell{1},y_cell{1}) is an emitter's (x,y) in z=zVec(1)
 
 zVecDiff = abs(zVec(1)-zVec(2));
-x_cell = cell(1,numel(zVec));
-y_cell = cell(1,numel(zVec));
+x_cell = cell(1, numel(zVec));
+y_cell = cell(1, numel(zVec));
 kk_vec = ones(1, numel(zVec));
 for jj = 1 : numel(z_match)
     for ii = 1 : numel(zVec)
@@ -122,3 +124,12 @@ if flag_Save2File == 1
 
     whos('-file','DataObjects.mat')
 end
+
+% for ii = 1 : numel(zVec)
+%     for jj = 1 : numel(x_cell{ii})
+%         xSrc = x_cell{ii}(jj);
+%         ySrc = y_cell{ii}(jj);
+%         zSrc = zVec(ii);
+%         xyz = [xSrc ySrc zSrc];
+%     end
+% end

@@ -1,8 +1,7 @@
 clc; close all; clear all;
 %% Generate Tetrapod for random (x,y) emitter locations
 
-
-num_emitters_vec = [6]; % num_planes length
+num_emitters_vec = [8]; % num_planes length
 zPosidx = find(num_emitters_vec);
 z_orig = [];
 for jj = 1 : numel(zPosidx)
@@ -61,13 +60,13 @@ Visualize_Sources(Sequence2.LinearCombinations, IC, imagesIC_flag, BlinkMovie_fl
 % x_orig = zeros(1,sum(cellfun('length',x_cell))); %preallocate to save
 % memory?
 % y_orig = zeros(1,sum(cellfun('length',x_cell)));
-x_orig = cell2vec(x_cell);
-y_orig = cell2vec(y_cell);
-y_orig = [];
+% x_orig = cell2vec(x_cell);
+% y_orig = cell2vec(y_cell);
+% y_orig = [];
 
 % [x_rec, y_rec] = pix_metric(x_orig(1), y_orig(1))
-I = mat2gray(IC(:,:,1));
-figure(3);imshow(I); hold on; 
+% I = mat2gray(IC(:,:,1));
+% figure(3);imshow(I); hold on; 
 % error_rate = ICA_acc( x_orig, y_orig, IC )
 % %% Test pix metric
 % close all;
