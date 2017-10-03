@@ -56,13 +56,6 @@ if class(Emitters) == 'struct'
     % Stack initialization
     ImPlaneZ          = zeros(FOV_r, FOV_r, length(ZposIndex), NumFrames);
 
-    % Noise
-    if AddNoiseFlag
-        FrameNoise = -1;
-    else
-        FrameNoise = zeros(FOV_r, FOV_r);
-    end
-
     kk = 1;
 
     % For each z layer
@@ -98,6 +91,8 @@ if class(Emitters) == 'struct'
                 % Generate PSF
                 [img, bfpField] = imgGenerator_fromPupilFunc_new(pupil1,gBlur,nomFocusVec,xyz,nPhotons,bg,...
                     FOV_r,lambda,n1,n2,NA,f_4f,M,resizeFactor);
+                
+                % Noise
 
                 % Accumulate in a stack
                 %%% ------------------------------------------------------------
@@ -106,7 +101,7 @@ if class(Emitters) == 'struct'
             end
             % Add noise
             % NEED TO ADD NOISE GENERATION PER FRAME
-            ImPlaneZ(:, :, ii)     = ImPlaneZ(:, :, ii) + FrameNoise;
+            ImPlaneZ(:, :, ii)     = ImPlaneZ(:, :, ii);
 
             % Normalize each layer for values 0-255
             ImPlaneZ(:, :, ii)     = ImPlaneZ(:, :, ii)/max(max(ImPlaneZ(:, :, ii)))*255;

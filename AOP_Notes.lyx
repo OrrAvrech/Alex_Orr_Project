@@ -207,7 +207,7 @@ is a scalar and represents a pixel
 \begin_inset Formula $\omega_{i}^{T}$
 \end_inset
 
- is a weights vector of source 
+ is a vector of weights, corresponding to source 
 \begin_inset Formula $i$
 \end_inset
 
@@ -216,11 +216,11 @@ is a scalar and represents a pixel
 \begin_inset Formula $x^{\left(j\right)}$
 \end_inset
 
-is a vector of pixel 
+ represents a pixel 
 \begin_inset Formula $j$
 \end_inset
 
- in all frames.
+ taken in all frames.
 \end_layout
 
 \end_body

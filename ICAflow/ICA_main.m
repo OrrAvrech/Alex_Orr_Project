@@ -29,10 +29,6 @@ Criterion   = 'euc_dist';
 [error, inds] = error_rate(Emitters, IC, Criterion, flag_cmpImg);
 total_result = sum(error);
 
-
-
-
-
 %% Generate Tetrapod for random (x,y) emitter locations
 % 
 % num_emitters_vec = [1 0 0 2 3 4]; % num_planes length
