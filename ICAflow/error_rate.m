@@ -28,6 +28,11 @@ if Display == 1
             xyz = [Emitters.x{jj}(kk), Emitters.y{jj}(kk), Emitters.zVec(jj)];
             original_path = cdir('..\DataSimulation\');
             im  = Data2TetrapodGen(xyz, 0, 0); % Single Tetrapod Image
+            % Mean Normalization of Original Sources
+%             im = (im - min(im(:))) / (max(im(:)) - min(im(:))) + 1;
+            im = (im - mean(im(:))) ./ std(im(:));
+            im = abs(im);
+%             im = histeq(im);
             cd (original_path);
            
             figure(ii); subplot 121 ; imagesc (im);

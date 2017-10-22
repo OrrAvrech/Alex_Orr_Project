@@ -6,18 +6,6 @@ for i=1:size_lincomb(3)
     x(i,:) = reshape(lin_comb(:,:,i), 1, []) ;
 end
 
-%% Movie
-% if exist(movie_flag) == 1 %movie_flag global
-%     show_movie = movie_flag;
-% else
-%     show_movie = 0;
-% end
-% if show_movie == 1
-%     for i=1:size_lincomb(3)
-%         imagesc(Sequence2.LinearCombinations(:,:,i));
-%         pause (1) ;
-%     end
-% end
 %% FastICA -- to obtain Mixing_mat and original sources
 % num_planes = size_lincomb(3);
 % num_emitters = IC_num;
@@ -31,8 +19,17 @@ s = W * x;
 s_img_mat = zeros(size_lincomb(1), size_lincomb(2), IC_num);
 for j=1 : IC_num
     s_img_mat(:,:,j) = reshape(s(j,:), size_lincomb(1), size_lincomb(2));
-%     figure(j);
-%     imagesc(s_img_mat(:,:,j));
+    % Mean Normalization of Estimated Sources
+%       s_img_mat(:,:,j) = abs(s_img_mat(:,:,j));
+%     s_img_mat(:,:,j) = s_img_mat(:,:,j) / mean(mean(s_img_mat(:,:,j)));
+%       s_img_mat(:,:,j) = s_img_mat(:,:,j) - min(min(s_img_mat(:,:,j)));
+%       s_img_mat(:,:,j) = s_img_mat(:,:,j) / max(max(s_img_mat(:,:,j)));
+%       s_img_mat(:,:,j) = s_img_mat(:,:,j) + 1;
+        SingleEstImg = s_img_mat(:,:,j);
+        SingleEstImg = (SingleEstImg - mean(SingleEstImg(:))) ./ std(SingleEstImg(:));
+%         s_img_mat(:,:,j) = (s_img_mat(:,:,j) - mean(mean(s_img_mat(:,:,j)))) / std(std(s_img_mat(:,:,j)));
+%         SingleEstImg = histeq(SingleEstImg);
+        s_img_mat(:,:,j) = abs(SingleEstImg);
 end
 IC = s_img_mat;
 end

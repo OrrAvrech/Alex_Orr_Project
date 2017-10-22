@@ -10,6 +10,13 @@ enable = sum(strcmp(crit_list,Criterion)); %% checks if related to xy list
 
 if enable 
     im = SingleImg; % Single Tetrapod Image 
+    % Mean Normalization of Original Sources
+%     im = (im - min(im(:))) / (max(im(:)) - min(im(:))) + 1;
+    im = (im - mean(im(:))) ./ std(im(:));
+    im = abs(im);
+%     im = histeq(im);
+    
+    % Go over all IC's diff from already used indices
     it_num = size(IC,3); 
 end 
 

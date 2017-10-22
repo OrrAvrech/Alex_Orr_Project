@@ -12,7 +12,7 @@ zt          = t+(0.5e-6)*sin(100*pi*t/(0.5e-6));
 vslz_MatchPts     = 1;                             % plot matched points when 1
 vslz_Emitters     = 1;                             % plot chosen emitters when 1
 
-flag_Save2File    = 1;                             % append EmittersObj
+flag_Save2File    = 0;                             % append EmittersObj
                                                    % to DataObjects.mat
                                                    % when 1. Save2File at
                                                    % end of process

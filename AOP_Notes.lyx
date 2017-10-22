@@ -83,11 +83,12 @@ Alex Finkelshtein, Orr Avrech
 
 \begin_layout Section*
 1.
- ICA Model
+ Blind Source Separation
 \end_layout
 
 \begin_layout Standard
-Blind Source Separation problem:
+Let us introduce the model we used, addressing the Blind Source Separation
+ problem:
 \end_layout
 
 \begin_layout Standard
@@ -103,11 +104,15 @@ x=As
 \end_inset
 
 
-\begin_inset Formula $x$
+\begin_inset Formula $\mathrm{\mathit{x}}$
 \end_inset
 
- is 
-\begin_inset Formula $T\times M^{2},$
+ 
+\begin_inset Formula $\in$
+\end_inset
+
+ 
+\begin_inset Formula $\mathbb{R}^{T\times M^{2}},$
 \end_inset
 
  where 
@@ -120,18 +125,19 @@ x=As
 
  is the image size.
  
-\begin_inset Formula $A$
+\begin_inset Formula $A\in\mathbb{R}^{T\times n}$
 \end_inset
 
- is the mixing matrix with dimensions 
-\begin_inset Formula $n\times T,$
-\end_inset
-
- for 
+ is the mixing matrix for 
 \begin_inset Formula $n$
 \end_inset
 
  being the number of sources.
+ 
+\begin_inset Formula $s\in\mathbb{R^{\mathrm{\mathit{n\times M^{2}}}}}$
+\end_inset
+
+is the estimated sources matrix.
  Notice that,
 \begin_inset Formula 
 \[
@@ -144,23 +150,12 @@ n=\#z_{planes}\cdot\#e_{per.plane}
 \begin_inset Newline newline
 \end_inset
 
-
-\begin_inset Formula $s$
+The sources are recovered by multiplying the unmixing matrix with the obesrved
+ frames: 
+\begin_inset Formula $s=Wx$
 \end_inset
 
- is a 
-\begin_inset Formula $n\times M^{2}$
-\end_inset
-
- matrix.
-\begin_inset Newline newline
-\end_inset
-
-
-\begin_inset Formula $W=A^{-1}$
-\end_inset
-
- is the unmixing matrix.
+, where
 \begin_inset Formula 
 \[
 W=\left(\begin{array}{ccc}
@@ -221,6 +216,113 @@ is a scalar and represents a pixel
 \end_inset
 
  taken in all frames.
+\end_layout
+
+\begin_layout Section*
+2.
+ Data Generating Process
+\end_layout
+
+\begin_layout Standard
+Creating a rich and reliable data set, may be helpful in reducing the test
+ error based on 
+\begin_inset Quotes eld
+\end_inset
+
+real world
+\begin_inset Quotes erd
+\end_inset
+
+ data, which will be examined later on.
+ Our Data Generator works as follows:
+\end_layout
+
+\begin_layout Enumerate
+Set parameters:
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Number of z planes
+\end_layout
+
+\begin_layout Enumerate
+zVec - possible z positions of an emitter
+\end_layout
+
+\begin_layout Enumerate
+Parameterization: 
+\begin_inset Formula $\left[x\left(t\right),y\left(t\right),z\left(t\right)\right]$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Acquire random indices of 
+\begin_inset Formula $t$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Attribute each emitter to the closest z plane
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename C:/Users/orrav/Documents/Technion/8th/Project/Figures/DataGen1.eps
+	scale 50
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename C:/Users/orrav/Documents/Technion/8th/Project/Figures/DataGen2.eps
+	scale 50
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+caption{(Left) Randomly obtained emitters.
+ (Right) Resulting emitter locations after z plane separation.}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+The Data Generator outputs an Emitters object.
+ This object is given as input to a Tetrapod generating function, which
+ outputs a sequence of linear combinations according to the chosen number
+ of frames.
 \end_layout
 
 \end_body
