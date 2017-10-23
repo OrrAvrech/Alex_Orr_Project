@@ -5,16 +5,16 @@ function [ error, ind ] = match_by_crit( SingleImg, IC, Criterion, used_inds )
 
 error = inf;
 crit_error = str2func (Criterion);
-crit_list = {'euc_dist', 'ImgXcorr', 'ImgL2'};
+crit_list = {'euc_dist', 'ImgXcorr', 'PoissCost'};
 enable = sum(strcmp(crit_list,Criterion)); %% checks if related to xy list
 
 if enable 
     im = SingleImg; % Single Tetrapod Image 
     % Mean Normalization of Original Sources
-%     im = (im - min(im(:))) / (max(im(:)) - min(im(:))) + 1;
     im = (im - mean(im(:))) ./ std(im(:));
     im = abs(im);
-%     im = histeq(im);
+    % MinMax Normalization of Original Sources
+    % im = (im - min(im(:))) / (max(im(:)) - min(im(:))) + 1;
     
     % Go over all IC's diff from already used indices
     it_num = size(IC,3); 

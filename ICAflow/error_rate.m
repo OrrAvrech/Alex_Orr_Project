@@ -29,11 +29,11 @@ if Display == 1
             original_path = cdir('..\DataSimulation\');
             im  = Data2TetrapodGen(xyz, 0, 0); % Single Tetrapod Image
             % Mean Normalization of Original Sources
-%             im = (im - min(im(:))) / (max(im(:)) - min(im(:))) + 1;
             im = (im - mean(im(:))) ./ std(im(:));
             im = abs(im);
-%             im = histeq(im);
             cd (original_path);
+            % MinMax Normalization of Original Sources
+            % im = (im - min(im(:))) / (max(im(:)) - min(im(:))) + 1;
            
             figure(ii); subplot 121 ; imagesc (im);
                         title('Original');
@@ -43,18 +43,6 @@ if Display == 1
         end
     end
 end
-
-%% Separate ICA results by plane index
-% IC_z = cell(1,num_planes);
-% IC_z_inds = [];
-% for ii = 1:size(IC,3) %put IC results in the z plane they fit most
-%     curr_z = fit_to_plane(IC(:,:,ii));
-%     if isempty(IC_z{curr_z}) next_row_ind = 1;
-%     else next_row_ind = size(IC_z{curr_z}(1,1,:),3)+1; 
-%     end
-%     IC_z{curr_z}(1:numel(IC(:,1,1)),1:numel(IC(1,:,1)),next_row_ind) = IC(:,:,ii); 
-%     IC_z_inds(end+1) = curr_z;
-% end
 
 end
 

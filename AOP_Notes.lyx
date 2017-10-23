@@ -297,15 +297,11 @@ status open
 \end_layout
 
 \begin_layout Plain Layout
-\begin_inset ERT
-status open
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
-
-
-\backslash
-caption{(Left) Randomly obtained emitters.
- (Right) Resulting emitter locations after z plane separation.}
+(Left) Randomly obtained emitters.
+ (Right) Resulting emitter locations after z plane separation.
 \end_layout
 
 \end_inset
@@ -313,16 +309,21 @@ caption{(Left) Randomly obtained emitters.
 
 \end_layout
 
-\end_inset
-
-
-\begin_inset Newline newline
 \end_inset
 
 The Data Generator outputs an Emitters object.
  This object is given as input to a Tetrapod generating function, which
  outputs a sequence of linear combinations according to the chosen number
  of frames.
+\end_layout
+
+\begin_layout Section*
+3.
+ Approaches
+\end_layout
+
+\begin_layout Standard
+
 \end_layout
 
 \end_body

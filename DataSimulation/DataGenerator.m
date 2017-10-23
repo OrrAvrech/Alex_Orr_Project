@@ -1,7 +1,7 @@
 clc; close all;
 %% Set parameters for data generator
 
-NumZplanes  = 20;                                 
+NumZplanes  = 200;                                 
 NumSamples  = 10000;                               % numer of rand and param. points
 zVec        = linspace(-2e-6, 2e-6, NumZplanes+1); % z positions of emitter
 t           = linspace(-2e-6, 2e-6, NumSamples);   % scaled according to zVec
@@ -12,7 +12,7 @@ zt          = t+(0.5e-6)*sin(100*pi*t/(0.5e-6));
 vslz_MatchPts     = 1;                             % plot matched points when 1
 vslz_Emitters     = 1;                             % plot chosen emitters when 1
 
-flag_Save2File    = 0;                             % append EmittersObj
+flag_Save2File    = 1;                             % append EmittersObj
                                                    % to DataObjects.mat
                                                    % when 1. Save2File at
                                                    % end of process
@@ -30,7 +30,7 @@ flag_Save2Text    = 0;                             % Saves a desirable param. fa
 %     jj = jj + 1;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-MaxEmitters = randi(NumZplanes); % NumZPlanes as an example 
+MaxEmitters = randi(50); % NumZPlanes as an example 
 tInd  = randi(NumSamples, 1, MaxEmitters);
 tIndu = unique(tInd); % Random integer indices with no repetitions
 

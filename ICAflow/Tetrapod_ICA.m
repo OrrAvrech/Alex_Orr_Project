@@ -20,15 +20,8 @@ s_img_mat = zeros(size_lincomb(1), size_lincomb(2), IC_num);
 for j=1 : IC_num
     s_img_mat(:,:,j) = reshape(s(j,:), size_lincomb(1), size_lincomb(2));
     % Mean Normalization of Estimated Sources
-%       s_img_mat(:,:,j) = abs(s_img_mat(:,:,j));
-%     s_img_mat(:,:,j) = s_img_mat(:,:,j) / mean(mean(s_img_mat(:,:,j)));
-%       s_img_mat(:,:,j) = s_img_mat(:,:,j) - min(min(s_img_mat(:,:,j)));
-%       s_img_mat(:,:,j) = s_img_mat(:,:,j) / max(max(s_img_mat(:,:,j)));
-%       s_img_mat(:,:,j) = s_img_mat(:,:,j) + 1;
         SingleEstImg = s_img_mat(:,:,j);
         SingleEstImg = (SingleEstImg - mean(SingleEstImg(:))) ./ std(SingleEstImg(:));
-%         s_img_mat(:,:,j) = (s_img_mat(:,:,j) - mean(mean(s_img_mat(:,:,j)))) / std(std(s_img_mat(:,:,j)));
-%         SingleEstImg = histeq(SingleEstImg);
         s_img_mat(:,:,j) = abs(SingleEstImg);
 end
 IC = s_img_mat;

@@ -93,6 +93,9 @@ if class(Emitters) == 'struct'
                     FOV_r,lambda,n1,n2,NA,f_4f,M,resizeFactor);
                 
                 % Noise
+%                 if AddNoiseFlag == 1
+%                     img = img + poissrnd(sqrt(nPhotons), [size(img,1) size(img,2)]);
+%                 end
 
                 % Accumulate in a stack
                 %%% ------------------------------------------------------------
@@ -170,7 +173,7 @@ else
     [img, bfpField] = imgGenerator_fromPupilFunc_new(pupil1,gBlur,nomFocusVec,xyz,nPhotons,bg,...
                     FOV_r,lambda,n1,n2,NA,f_4f,M,resizeFactor);
     
-    % Sequence is return as a Single Tetrapod Image
+    % Sequence is returned as a Single Tetrapod Image
     Sequence2 = img;
      
 end
