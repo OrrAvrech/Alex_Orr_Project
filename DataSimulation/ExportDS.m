@@ -1,3 +1,13 @@
+%% Obtain Random Emitters
+
+NumZplanes = 80;
+MaxSources = 5;
+zVec = linspace(-2e-6,2e-6,NumZplanes+1);
+NumSources = randi(MaxSources);
+x = (rand(1,NumSources)-0.5)*1e-7;
+y = (rand(1,NumSources)-0.5)*1e-7;
+z = (randi(NumZplanes,[1,NumSources]));
+
 Objects = load('DataObjects.mat');
 flag_save2DS = 1;
 
