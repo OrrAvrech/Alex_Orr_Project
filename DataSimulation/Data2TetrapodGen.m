@@ -35,7 +35,9 @@ if class(Emitters) == 'struct'
     y_cell = Emitters.y;
     zVec   = Emitters.zVec;
     n      = numel(zVec);
-
+    
+    labels_mat = [];
+    
     %%%%%%%%%%%%%%%%%%%%%%% Function Parameters %%%%%%%%%%%%%%%%%%%%%
     % NumOfEmitters     = 3;      % Per layer
     % ZposIndex         = [1]; % Planes along z to take from
@@ -73,47 +75,61 @@ if class(Emitters) == 'struct'
           end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-        % For each frame in the movie
-        for FrameInd = 1:NumFrames
-            % Generate blinking pattern
-            if ApplyBlinkingFlag
-                BlinkingVec = rand(NumOfEmitters, 1);
-            else
-                BlinkingVec = ones(NumOfEmitters, 1);
-            end
-            %Sequence.BlinkingVec(:, kk) = BlinkingVec;
-
-            % Generate each frame: Generate tetrapod PSF for each emitter (per z layer, per frame)
-            % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        if flag_Save2DS == 1
             for jj = 1:NumOfEmitters
                 xyz = [x(jj), y(jj), zVec(ZposIndex(ii))];
 
                 % Generate PSF
                 [img, bfpField] = imgGenerator_fromPupilFunc_new(pupil1,gBlur,nomFocusVec,xyz,nPhotons,bg,...
                     FOV_r,lambda,n1,n2,NA,f_4f,M,resizeFactor);
-                
-                % Noise
-%                 if AddNoiseFlag == 1
-%                     img = img + poissrnd(sqrt(nPhotons), [size(img,1) size(img,2)]);
-%                 end
 
-                % Accumulate in a stack
-                %%% ------------------------------------------------------------
-                ImPlaneZ(:, :, ii, FrameInd) = ImPlaneZ(:, :, ii, FrameInd) + BlinkingVec(jj)*img;
-                %%% ------------------------------------------------------------
+                labels_mat(:,end+1) = reshape(img, [], 1);
+            end 
+        else
+            % For each frame in the movie
+            for FrameInd = 1:NumFrames
+                % Generate blinking pattern
+                if ApplyBlinkingFlag
+                    BlinkingVec = rand(NumOfEmitters, 1);
+                else
+                    BlinkingVec = ones(NumOfEmitters, 1);
+                end
+                %Sequence.BlinkingVec(:, kk) = BlinkingVec;
+
+                % Generate each frame: Generate tetrapod PSF for each emitter (per z layer, per frame)
+                % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                for jj = 1:NumOfEmitters
+                    xyz = [x(jj), y(jj), zVec(ZposIndex(ii))];
+
+                    % Generate PSF
+                    [img, bfpField] = imgGenerator_fromPupilFunc_new(pupil1,gBlur,nomFocusVec,xyz,nPhotons,bg,...
+                        FOV_r,lambda,n1,n2,NA,f_4f,M,resizeFactor);
+                    
+                    img = poissrnd(img);
+
+                    % Noise
+    %                 if AddNoiseFlag == 1
+    %                     img = img + poissrnd(sqrt(nPhotons), [size(img,1) size(img,2)]);
+    %                 end
+
+                    % Accumulate in a stack
+                    %%% ------------------------------------------------------------
+                    ImPlaneZ(:, :, ii, FrameInd) = ImPlaneZ(:, :, ii, FrameInd) + BlinkingVec(jj)*img;
+                    %%% ------------------------------------------------------------
+                end
+                % Add noise
+                % NEED TO ADD NOISE GENERATION PER FRAME
+                ImPlaneZ(:, :, ii)     = ImPlaneZ(:, :, ii);
+
+                % Normalize each layer for values 0-255
+                ImPlaneZ(:, :, ii)     = ImPlaneZ(:, :, ii)/max(max(ImPlaneZ(:, :, ii)))*255;
+                % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+                % Rearrange in blocks of [x, y, t, z]. This is for presentation convenience only
+                eval(['Sequence.Planes.z' num2str(ZposIndex(ii)) ' = squeeze(ImPlaneZ(:, :, ' num2str(ii) ', :));']);
+
+                kk = kk + 1;
             end
-            % Add noise
-            % NEED TO ADD NOISE GENERATION PER FRAME
-            ImPlaneZ(:, :, ii)     = ImPlaneZ(:, :, ii);
-
-            % Normalize each layer for values 0-255
-            ImPlaneZ(:, :, ii)     = ImPlaneZ(:, :, ii)/max(max(ImPlaneZ(:, :, ii)))*255;
-            % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-            % Rearrange in blocks of [x, y, t, z]. This is for presentation convenience only
-            eval(['Sequence.Planes.z' num2str(ZposIndex(ii)) ' = squeeze(ImPlaneZ(:, :, ' num2str(ii) ', :));']);
-
-            kk = kk + 1;
         end
     end
 
@@ -154,15 +170,17 @@ if class(Emitters) == 'struct'
     % DataSet.X: a cell of samples. Each sample is a movie of blinking LinearCombinations
     % DataSet.y: a cell of tags. Each tag is a packet of source images
 
+    features = cell(1);
+    labels   = cell(1);
     if flag_Save2DS == 1
-        X = reshape(Sequence2.LinearCombinations, [], 1);
+        features{:} = reshape(Sequence2.LinearCombinations, [], 1);
+        labels{:}   = reshape(labels_mat, [], 1);
         m = matfile('DataSet.mat','Writable',true);
         try
-            m.X = [m.X, X];
-            m.y = [m.y, y];
+            m.features = [m.features, features];
+            m.labels   = [m.labels, labels];
         catch
-            save('DataSet.mat', 'X', '-v7.3');
-            save('DataSet.mat', 'y', '-v7.3');
+            save('DataSet.mat', 'features', 'labels', '-v7.3');
         end
     end
 
@@ -172,6 +190,8 @@ else
     % Generate PSF
     [img, bfpField] = imgGenerator_fromPupilFunc_new(pupil1,gBlur,nomFocusVec,xyz,nPhotons,bg,...
                     FOV_r,lambda,n1,n2,NA,f_4f,M,resizeFactor);
+                
+     img = poissrnd(img);
     
     % Sequence is returned as a Single Tetrapod Image
     Sequence2 = img;

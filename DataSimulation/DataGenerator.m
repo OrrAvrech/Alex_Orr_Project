@@ -1,23 +1,23 @@
 clc; close all;
 %% Set parameters for data generator
 
-NumZplanes  = 200;                                 
+NumZplanes  = 10;                                 
 NumSamples  = 10000;                               % numer of rand and param. points
 zVec        = linspace(-2e-6, 2e-6, NumZplanes+1); % z positions of emitter
 t           = linspace(-2e-6, 2e-6, NumSamples);   % scaled according to zVec
-xt          = (1e-6)*(1+0.25*cos(100*pi*t/(0.5e-6))).*cos(2*t/(0.5e-6)) ;
-yt          = (1e-6)*(1+0.25*cos(100*pi*t/(0.5e-6))).*sin(2*t/(0.5e-6)) ;
+xt          = (1e-7)*(1+0.25*cos(100*pi*t/(0.5e-6))).*cos(2*t/(0.5e-6)) ;
+yt          = (1e-7)*(1+0.25*cos(100*pi*t/(0.5e-6))).*sin(2*t/(0.5e-6)) ;
 zt          = t+(0.5e-6)*sin(100*pi*t/(0.5e-6));
 
-vslz_MatchPts     = 1;                             % plot matched points when 1
-vslz_Emitters     = 1;                             % plot chosen emitters when 1
+vslz_MatchPts     = 0;                             % plot matched points when 1
+vslz_Emitters     = 0;                             % plot chosen emitters when 1
 
-flag_Save2File    = 1;                             % append EmittersObj
+flag_Save2File    = 0;                             % append EmittersObj
                                                    % to DataObjects.mat
                                                    % when 1. Save2File at
                                                    % end of process
                                                    
-flag_Save2Text    = 0;                             % Saves a desirable param. family 
+flag_Save2Text    = 1;                             % Saves a desirable param. family 
 
 %% Allow Repetitions
 % acquire different values of random xyz in each iteration
@@ -25,12 +25,12 @@ flag_Save2Text    = 0;                             % Saves a desirable param. fa
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Uncomment the following when used and add end of loop %%%
 % NumRep = 50;
-% jj = 0;
-% while jj < NumRep
-%     jj = jj + 1;
+% t = 0;
+% while t < NumRep
+%     t = t + 1;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-MaxEmitters = randi(50); % NumZPlanes as an example 
+MaxEmitters = randi(15); % NumZPlanes as an example 
 tInd  = randi(NumSamples, 1, MaxEmitters);
 tIndu = unique(tInd); % Random integer indices with no repetitions
 
@@ -119,9 +119,11 @@ if flag_Save2File == 1
     whos('-file','DataObjects.mat')
 end
 
+% end
 %% Save a parameterization family to text table
 
 if flag_Save2Text == 1
+    T = readtable('ParamTable.txt');
     xt_str      = {'(1e-6)*(1+0.25*cos(50*pi*t/(0.5e-6))).*cos(t/(0.5e-6))'};
     yt_str      = {'(1e-6)*(1+0.25*cos(50*pi*t/(0.5e-6))).*sin(t/(0.5e-6))'};
     zt_str      = {'t+(0.5e-6)*sin(50*pi*t/(0.5e-6))'};

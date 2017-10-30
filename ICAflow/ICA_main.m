@@ -3,10 +3,10 @@ clc; close all;
 
 original_path = cdir('..\DataSimulation\');
 m = matfile('DataObjects.mat');
-Emitters = m.EmittersObj(1,6); % Example object
+Emitters = m.EmittersObj(1,4); % Example object
 NumSources = Emitters.NumSources;
 
-NumFrames = 20;
+NumFrames = 150;
 if NumFrames <= NumSources
     NumFrames = NumSources + 1; %NumFrames minimal value
 end
