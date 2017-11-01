@@ -11,17 +11,27 @@ function finished = Tamnun_gen(samp_num, save_to)
     x_width = 2e-7;
     y_width = 2e-7;
     
-    %helpers:
+        %%helpers:
     zVec = linspace(-2e-6,2e-6,NumZplanes+1);
     %name_ind:
     file_naming_ind = 1;
+%     [cur_path,cur_folder] = fileparts(pwd)
+    
+        %%make sure the folder exists
+    original_path = dir; % dir(name) returns file list containg name sub string
+    orig_listing = {original_path.name};
+    exists = find(ismember(orig_listing,save_to));
+    if ~numel(exists)
+        mkdir(save_to);
+    end
+    
     cdir(['..\',save_to,'\']); %change to saving destination
-    listing = dir; % dir(name) returns file list containg name sub string
-    listing = {listing.name};
-    listing = sort(result);
-    last_file = listing{end};
-    %last_file = '190.mat' %test
-    file_naming_ind = str2num(last_file(1:end-4)) %remove '.mat'
+    dest_listing = dir
+    if ~dest_listing(end).isdir
+        dest_names = ({dest_listing.name});
+        last_file = dest_names{end};
+        last_file.isdir
+        file_naming_ind = str2num(last_file(1:end-4)) %remove '.mat'
     
     
     for i=1:samp_num
@@ -62,5 +72,5 @@ function finished = Tamnun_gen(samp_num, save_to)
        
     end
     
-    return 1
+    finished = 1
 end

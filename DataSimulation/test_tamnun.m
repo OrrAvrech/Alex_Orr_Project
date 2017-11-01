@@ -1,0 +1,1 @@
+Tamnun_gen(100,'test_dir')
