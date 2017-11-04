@@ -66,9 +66,16 @@ if class(Emitters) == 'struct'
         %%%%%%%%%%%%%%%%%%%%%%% Function Parameters %%%%%%%%%%%%%%%%%%%%%%%
     %     x = (rand(NumOfEmitters, 1)-0.5)*10e-6; % x position of emitter (random)
     %     y = (rand(NumOfEmitters, 1)-0.5)*10e-6; % y position of emitter (random)
-          x = x_cell{ii};
-          y = y_cell{ii};
-          NumOfEmitters = numel(x_cell{ii});  % Per Layer
+          if min(subsref(class(x_cell),struct('type','()','subs',{{(1:4)}})) == 'cell') %%check if cell or double
+            x = x_cell{ii};
+            y = y_cell{ii};
+            NumOfEmitters = numel(x_cell{ii});  % Per Layer
+          else
+            x = x_cell;
+            y = y_cell;
+            NumOfEmitters = numel(x)
+          end
+          
 
           if NumOfEmitters == 0
               continue;
@@ -191,11 +198,11 @@ else
     [img, bfpField] = imgGenerator_fromPupilFunc_new(pupil1,gBlur,nomFocusVec,xyz,nPhotons,bg,...
                     FOV_r,lambda,n1,n2,NA,f_4f,M,resizeFactor);
                 
-     img = poissrnd(img);
+%      img = poissrnd(img);
     
     % Sequence is returned as a Single Tetrapod Image
     Sequence2 = img;
-     
+    cd (original_path);
 end
     
 
