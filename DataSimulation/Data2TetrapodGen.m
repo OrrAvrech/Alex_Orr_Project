@@ -1,4 +1,4 @@
-function [ Sequence2 ] = Data2TetrapodGen( Emitters, NumFrames, flag_Save2DS )
+function [ Sequence2 ] = Data2TetrapodGen( Emitters, NumFrames )
 
 rng(33545);
 
@@ -29,14 +29,16 @@ bg                 = 28;                        % background photons per pixel
 lambda             = 670e-9;                   % Imaging wavelength
 
 %% Create figures with different z values and combine
+% Flags
+AddNoiseFlag = 0;
+flag_Save2DS = 0; 
+
 if class(Emitters) == 'struct'
 
     x_cell = Emitters.x;
     y_cell = Emitters.y;
     zVec   = Emitters.zVec;
     n      = numel(zVec);
-    
-    labels_mat = [];
     
     %%%%%%%%%%%%%%%%%%%%%%% Function Parameters %%%%%%%%%%%%%%%%%%%%%
     % NumOfEmitters     = 3;      % Per layer
@@ -48,7 +50,6 @@ if class(Emitters) == 'struct'
 
     % Flags (all binaries)
     ApplyBlinkingFlag = 1; % If 1, then each isolated emitter is multiplied by a random number to simulate blinking
-    AddNoiseFlag      = 0; % Currently not in use
 
     % Minimal number of frames should be 2
     if NumFrames < 2
@@ -57,8 +58,6 @@ if class(Emitters) == 'struct'
 
     % Stack initialization
     ImPlaneZ          = zeros(FOV_r, FOV_r, length(ZposIndex), NumFrames);
-
-    kk = 1;
 
     % For each z layer
     for ii = 1:length(ZposIndex)
@@ -83,6 +82,7 @@ if class(Emitters) == 'struct'
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
         if flag_Save2DS == 1
+            labels_mat = [];
             for jj = 1:NumOfEmitters
                 xyz = [x(jj), y(jj), zVec(ZposIndex(ii))];
 
@@ -92,6 +92,7 @@ if class(Emitters) == 'struct'
 
                 labels_mat(:,end+1) = reshape(img, [], 1);
             end 
+            
         else
             % For each frame in the movie
             for FrameInd = 1:NumFrames
@@ -110,14 +111,12 @@ if class(Emitters) == 'struct'
 
                     % Generate PSF
                     [img, bfpField] = imgGenerator_fromPupilFunc_new(pupil1,gBlur,nomFocusVec,xyz,nPhotons,bg,...
-                        FOV_r,lambda,n1,n2,NA,f_4f,M,resizeFactor);
-                    
-                    img = poissrnd(img);
+                        FOV_r,lambda,n1,n2,NA,f_4f,M,resizeFactor);                  
 
                     % Noise
-    %                 if AddNoiseFlag == 1
-    %                     img = img + poissrnd(sqrt(nPhotons), [size(img,1) size(img,2)]);
-    %                 end
+                    if AddNoiseFlag == 1
+                        img = poissrnd(img);
+                    end
 
                     % Accumulate in a stack
                     %%% ------------------------------------------------------------
@@ -134,8 +133,7 @@ if class(Emitters) == 'struct'
 
                 % Rearrange in blocks of [x, y, t, z]. This is for presentation convenience only
                 eval(['Sequence.Planes.z' num2str(ZposIndex(ii)) ' = squeeze(ImPlaneZ(:, :, ' num2str(ii) ', :));']);
-
-                kk = kk + 1;
+                
             end
         end
     end
@@ -198,7 +196,10 @@ else
     [img, bfpField] = imgGenerator_fromPupilFunc_new(pupil1,gBlur,nomFocusVec,xyz,nPhotons,bg,...
                     FOV_r,lambda,n1,n2,NA,f_4f,M,resizeFactor);
                 
-%      img = poissrnd(img);
+    % Noise
+    if AddNoiseFlag == 1
+        img = poissrnd(img);
+    end
     
     % Sequence is returned as a Single Tetrapod Image
     Sequence2 = img;

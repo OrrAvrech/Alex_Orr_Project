@@ -1,1 +1,4 @@
-Tamnun_gen(2, 20, 5, 'Dataset') %% (#samples, #frames, #maxSources, destination dir name inside '')
+NumSamples = 2;
+NumFrames  = 20;
+MaxSources = 5;
+Tamnun_gen(NumSamples, NumFrames, MaxSources, 'Dataset');
