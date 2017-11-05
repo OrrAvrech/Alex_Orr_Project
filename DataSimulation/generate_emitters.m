@@ -22,5 +22,5 @@ function emitters = generate_emitters(MaxSources)
     z = (randi(NumZplanes,[1,NumSources]));
     emitters.x = x;
     emitters.y = y;
-    emitters.zVec = z;
+    emitters.zVec = zVec(z);
 end
