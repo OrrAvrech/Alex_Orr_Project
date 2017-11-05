@@ -17,7 +17,7 @@ cd (original_path);
 
 s = W * x;
 s_img_mat = zeros(size_lincomb(1), size_lincomb(2), IC_num);
-for j=1 : IC_num
+for j=1 : size(s,1)
     s_img_mat(:,:,j) = reshape(s(j,:), size_lincomb(1), size_lincomb(2));
     % Mean Normalization of Estimated Sources
         SingleEstImg = s_img_mat(:,:,j);

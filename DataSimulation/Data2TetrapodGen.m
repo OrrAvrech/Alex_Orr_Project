@@ -34,19 +34,13 @@ AddNoiseFlag = 0;
 flag_Save2DS = 0; 
 
 if class(Emitters) == 'struct'
-
-    x_cell = Emitters.x;
-    y_cell = Emitters.y;
-    zVec   = Emitters.zVec;
-    n      = numel(zVec);
-    
-    %%%%%%%%%%%%%%%%%%%%%%% Function Parameters %%%%%%%%%%%%%%%%%%%%%
-    % NumOfEmitters     = 3;      % Per layer
-    % ZposIndex         = [1]; % Planes along z to take from
-    % NumFrames         = 4;      % Number of frames in the movie
-
-    ZposIndex        = 1:n; % Planes along z to take from
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%% Function Parameters %%%%%%%%%%%%%%%%%%%%%
+    x             = Emitters.x;         % Vec of random x coordinates
+    y             = Emitters.y;         % Vec of random y coordinates
+    zVec          = Emitters.zVec;      % Possible z planes
+    ZposIndex     = Emitters.ZposIndex; % Indices of zVec (elements may be equal)
+    NumOfEmitters = numel(ZposIndex);   
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     % Flags (all binaries)
     ApplyBlinkingFlag = 1; % If 1, then each isolated emitter is multiplied by a random number to simulate blinking
@@ -61,27 +55,8 @@ if class(Emitters) == 'struct'
 
     % For each z layer
     for ii = 1:length(ZposIndex)
-        % Generate a random number of emitters for each layer
-        %%%%%%%%%%%%%%%%%%%%%%% Function Parameters %%%%%%%%%%%%%%%%%%%%%%%
-    %     x = (rand(NumOfEmitters, 1)-0.5)*10e-6; % x position of emitter (random)
-    %     y = (rand(NumOfEmitters, 1)-0.5)*10e-6; % y position of emitter (random)
-          if min(subsref(class(x_cell),struct('type','()','subs',{{(1:4)}})) == 'cell') %%check if cell or double
-            x = x_cell{ii};
-            y = y_cell{ii};
-            NumOfEmitters = numel(x_cell{ii});  % Per Layer
-          else
-            x = x_cell;
-            y = y_cell;
-            NumOfEmitters = numel(x)
-          end
-          
 
-          if NumOfEmitters == 0
-              continue;
-          end
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-        if flag_Save2DS == 1
+        if flag_Save2DS == 1 % Currently not in use            
             labels_mat = [];
             for jj = 1:NumOfEmitters
                 xyz = [x(jj), y(jj), zVec(ZposIndex(ii))];
@@ -102,12 +77,10 @@ if class(Emitters) == 'struct'
                 else
                     BlinkingVec = ones(NumOfEmitters, 1);
                 end
-                %Sequence.BlinkingVec(:, kk) = BlinkingVec;
 
                 % Generate each frame: Generate tetrapod PSF for each emitter (per z layer, per frame)
                 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                for jj = 1:NumOfEmitters
-                    xyz = [x(jj), y(jj), zVec(ZposIndex(ii))];
+                    xyz = [x(ii), y(ii), zVec(ZposIndex(ii))];
 
                     % Generate PSF
                     [img, bfpField] = imgGenerator_fromPupilFunc_new(pupil1,gBlur,nomFocusVec,xyz,nPhotons,bg,...
@@ -120,9 +93,8 @@ if class(Emitters) == 'struct'
 
                     % Accumulate in a stack
                     %%% ------------------------------------------------------------
-                    ImPlaneZ(:, :, ii, FrameInd) = ImPlaneZ(:, :, ii, FrameInd) + BlinkingVec(jj)*img;
+                    ImPlaneZ(:, :, ii, FrameInd) = ImPlaneZ(:, :, ii, FrameInd) + BlinkingVec(ii)*img;
                     %%% ------------------------------------------------------------
-                end
                 % Add noise
                 % NEED TO ADD NOISE GENERATION PER FRAME
                 ImPlaneZ(:, :, ii)     = ImPlaneZ(:, :, ii);
@@ -177,7 +149,7 @@ if class(Emitters) == 'struct'
 
     features = cell(1);
     labels   = cell(1);
-    if flag_Save2DS == 1
+    if flag_Save2DS == 1 % Currently not in use
         features{:} = reshape(Sequence2.LinearCombinations, [], 1);
         labels{:}   = reshape(labels_mat, [], 1);
         m = matfile('DataSet.mat','Writable',true);
@@ -190,6 +162,7 @@ if class(Emitters) == 'struct'
     end
 
 else
+    % Single Tetrapod Generator
     
     xyz = Emitters;
     % Generate PSF

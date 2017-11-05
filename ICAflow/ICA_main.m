@@ -1,12 +1,12 @@
 clc; close all;
-%% Generate Tetrapod using simulated emitters object
-
+%% Simulated Emitters Object %%
+% Generate Tetrapod using simulated emitters object
 original_path = cdir('..\DataSimulation\');
 m = matfile('DataObjects.mat');
 Emitters = m.EmittersObj(1,4); % Example object
 NumSources = Emitters.NumSources;
 
-NumFrames = 150;
+NumFrames = 20;
 if NumFrames <= NumSources
     NumFrames = NumSources + 1; %NumFrames minimal value
 end
@@ -23,6 +23,28 @@ imagesIC_flag = 0;
 BlinkMovie_flag = 0;
 
 Visualize_Sources(Sequence2.LinearCombinations, IC, imagesIC_flag, BlinkMovie_flag);
+%% Test error rate by Criterion
+flag_cmpImg = 1;
+Criterion   = 'PoissCost';
+[error, inds] = error_rate(Emitters, IC, Criterion, flag_cmpImg);
+total_result = sum(error)/NumSources;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Random Emitters %%
+
+m1 = load('..\DataSimulation\Dataset\1.mat');
+LinComb = m1.dat.x;
+
+%% Run FastICA
+
+MaxSources = 5;
+IC = Tetrapod_ICA(MaxSources, LinComb);
+
+%% Visualize ICA Input and Output
+imagesIC_flag = 1;
+BlinkMovie_flag = 0;
+
+Visualize_Sources(LinComb, IC, imagesIC_flag, BlinkMovie_flag);
 %% Test error rate by Criterion
 flag_cmpImg = 1;
 Criterion   = 'PoissCost';
