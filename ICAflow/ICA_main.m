@@ -32,7 +32,7 @@ total_result = sum(error)/NumSources;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Random Emitters %%
 
-Emitters = load('..\DataSimulation\Dataset\1.mat');
+Emitters = load('..\DataSimulation\Dataset\8.mat');
 LinComb = Emitters.dat.x;
 
 % Run FastICA
@@ -40,11 +40,11 @@ MaxSources = 5;
 IC = Tetrapod_ICA(MaxSources, LinComb);
 
 % Visualize ICA Input and Output
-imagesIC_flag = 0;
+imagesIC_flag = 1;
 BlinkMovie_flag = 0;
 
 Visualize_Sources(LinComb, IC, imagesIC_flag, BlinkMovie_flag);
-% Test error rate by Criterion
+%% Test error rate by Criterion -- Bug (error in some cases)
 flag_cmpImg = 1;
 Criterion   = 'PoissCost';
 [error, inds] = error_rateRnd(Emitters, IC, Criterion, flag_cmpImg);

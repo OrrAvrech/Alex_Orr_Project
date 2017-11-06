@@ -14,7 +14,8 @@ if enable
     im = (im - mean(im(:))) ./ std(im(:));
     im = abs(im);
     % MinMax Normalization of Original Sources
-    % im = (im - min(im(:))) / (max(im(:)) - min(im(:))) + 1;
+%     im = (im - min(im(:))) / (max(im(:)) - min(im(:))) + 1;
+%     im = abs(im);
     
     % Go over all IC's diff from already used indices
     it_num = size(IC,3); 

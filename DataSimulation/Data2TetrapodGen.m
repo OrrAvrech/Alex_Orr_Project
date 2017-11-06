@@ -24,14 +24,15 @@ gBlur              = 0.5;                      % extra PSF blur factor
 FOV_r              = 200;                      % Field of view of the image. Measured in #pixels and assumed squared image
 n1                 = 1.518;                    % ref index
 n2                 = n1;                       % ???
-nPhotons           = 2000;                     % signal photons
-bg                 = 28;                        % background photons per pixel
+nPhotons           = 1000;                     % signal photons
+bg                 = 2;                        % background photons per pixel
 lambda             = 670e-9;                   % Imaging wavelength
 
 %% Create figures with different z values and combine
 % Flags
 AddNoiseFlag = 0;
 flag_Save2DS = 0; 
+% add gaussian noise
 
 if class(Emitters) == 'struct'
 %%%%%%%%%%%%%%%%%%%%%%% Function Parameters %%%%%%%%%%%%%%%%%%%%%

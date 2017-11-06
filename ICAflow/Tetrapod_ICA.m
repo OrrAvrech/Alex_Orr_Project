@@ -24,6 +24,10 @@ for j = 1 : IC_num
         SingleEstImg = s_img_mat(:,:,j);
         SingleEstImg = (SingleEstImg - mean(SingleEstImg(:))) ./ std(SingleEstImg(:));
         s_img_mat(:,:,j) = abs(SingleEstImg);
+    % MinMax Normalization of Original Sources
+%         SingleEstImg = (SingleEstImg - min(SingleEstImg(:))) / (max(SingleEstImg(:)) - min(SingleEstImg(:))) + 1;
+%         s_img_mat(:,:,j) = abs(SingleEstImg);
+% uint8 -- 0-255
 end
 IC = s_img_mat;
 end
