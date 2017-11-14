@@ -170,6 +170,9 @@ else
     [img, bfpField] = imgGenerator_fromPupilFunc_new(pupil1,gBlur,nomFocusVec,xyz,nPhotons,bg,...
                     FOV_r,lambda,n1,n2,NA,f_4f,M,resizeFactor);
                 
+    % Normalize -- Mean-Std -- 0-255
+    
+                
     % Noise
     if AddNoiseFlag == 1
         img = poissrnd(img);
