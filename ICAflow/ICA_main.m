@@ -32,8 +32,8 @@ total_result = sum(error)/NumSources;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Random Emitters %%
 
-Emitters = load('..\DataSimulation\Dataset\8.mat');
-LinComb = Emitters.dat.x;
+Emitters = load('..\DataSimulation\Dataset\13.mat');
+LinComb = Emitters.x;
 
 % Run FastICA
 MaxSources = 5;
@@ -41,7 +41,7 @@ IC = Tetrapod_ICA(MaxSources, LinComb);
 
 % Visualize ICA Input and Output
 imagesIC_flag = 1;
-BlinkMovie_flag = 0;
+BlinkMovie_flag = 1;
 
 Visualize_Sources(LinComb, IC, imagesIC_flag, BlinkMovie_flag);
 %% Test error rate by Criterion -- Bug (error in some cases)

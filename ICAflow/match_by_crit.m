@@ -11,8 +11,8 @@ enable = sum(strcmp(crit_list,Criterion)); %% checks if related to xy list
 if enable 
     im = SingleImg; % Single Tetrapod Image 
     % Mean Normalization of Original Sources
-    im = (im - mean(im(:))) ./ std(im(:));
-    im = abs(im);
+%     im = (im - mean(im(:))) ./ std(im(:));
+%     im = abs(im);
     % MinMax Normalization of Original Sources
 %     im = (im - min(im(:))) / (max(im(:)) - min(im(:))) + 1;
 %     im = abs(im);

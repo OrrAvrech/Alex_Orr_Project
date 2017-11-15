@@ -11,7 +11,7 @@ Error_vec = zeros(1, NumSourcesEst);
 
 ii = 1;
     for kk = 1 : NumSourcesEst
-        im = Emitters.dat.y(:,:,kk);
+        im = Emitters.y(:,:,kk);
         [Error, Ind] = match_by_crit(im, IC, Criterion, Ind_vec);
         Ind_vec(ii) = Ind; 
         Error_vec(ii) = Error;
@@ -22,10 +22,10 @@ ii = 1;
 if Display == 1
     ii = 1;
         for kk = 1 : NumSourcesEst
-            im = Emitters.dat.y(:,:,kk);
+            im = Emitters.y(:,:,kk);
             % Mean Normalization of Original Sources
-            im = (im - mean(im(:))) ./ std(im(:));
-            im = abs(im);
+%             im = (im - mean(im(:))) ./ std(im(:));
+%             im = abs(im);
             % MinMax Normalization of Original Sources
             % im = (im - min(im(:))) / (max(im(:)) - min(im(:))) + 1;
            

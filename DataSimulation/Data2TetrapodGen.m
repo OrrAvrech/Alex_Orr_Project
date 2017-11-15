@@ -21,7 +21,7 @@ f_4f               = 15e-2;                    % 4f lens focal length
 M                  = 100;                      % magnification
 resizeFactor       = 1/4;                      % numerical sampling of EM field (low = better sampling)
 gBlur              = 0.5;                      % extra PSF blur factor
-FOV_r              = 200;                      % Field of view of the image. Measured in #pixels and assumed squared image
+FOV_r              = 100;                      % Field of view of the image. Measured in #pixels and assumed squared image
 n1                 = 1.518;                    % ref index
 n2                 = n1;                       % ???
 nPhotons           = 1000;                     % signal photons
@@ -121,7 +121,7 @@ if class(Emitters) == 'struct'
 
         % Take linear combination
         LinComb(:, :, ii)     = sum(repmat(permute(Weights, [2 3 1]), [FOV_r, FOV_r, 1]).*squeeze(ImPlaneZ(:, :, :, ii)), 3);
-        %LinComb(:, :, ii)     = LinComb(:, :, ii)./max(max(LinComb(:, :, ii)))*255;
+        LinComb(:, :, ii)     = LinComb(:, :, ii)./max(max(LinComb(:, :, ii)))*255;
 
         % Accumulate weights
         Weights_Acccum(:, ii) = Weights;
@@ -170,8 +170,8 @@ else
     [img, bfpField] = imgGenerator_fromPupilFunc_new(pupil1,gBlur,nomFocusVec,xyz,nPhotons,bg,...
                     FOV_r,lambda,n1,n2,NA,f_4f,M,resizeFactor);
                 
-    % Normalize -- Mean-Std -- 0-255
-    
+    % Normalize -- 0-255
+    img = img/max(img(:))*255;
                 
     % Noise
     if AddNoiseFlag == 1

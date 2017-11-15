@@ -1,11 +1,12 @@
 function labels = label_tetrapods(Emitters, MaxSources)
+    FOV_r = 100;
     n = numel(Emitters.x);
     x = Emitters.x;
     y = Emitters.y;
     ZposIndex = Emitters.ZposIndex;
     zVec = Emitters.zVec;
     z = zVec(ZposIndex);
-    labels = zeros(200,200,MaxSources);
+    labels = zeros(FOV_r,FOV_r,MaxSources);
     parfor i = 1:n
         xyz = [x(i), y(i), z(i)];
         tetrapod_ans = Data2TetrapodGen(xyz , 1);
