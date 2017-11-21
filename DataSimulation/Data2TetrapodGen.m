@@ -52,20 +52,18 @@ if class(Emitters) == 'struct'
     end
 
     % Stack initialization
-    ImPlaneZ          = zeros(FOV_r, FOV_r, length(ZposIndex), NumFrames);
+    ImPlaneZ = zeros(FOV_r, FOV_r, length(ZposIndex), NumFrames);
 
     % For each z layer
     for ii = 1:length(ZposIndex)
-
+    
         if flag_Save2DS == 1 % Currently not in use            
             labels_mat = [];
             for jj = 1:NumOfEmitters
                 xyz = [x(jj), y(jj), zVec(ZposIndex(ii))];
-
                 % Generate PSF
                 [img, bfpField] = imgGenerator_fromPupilFunc_new(pupil1,gBlur,nomFocusVec,xyz,nPhotons,bg,...
-                    FOV_r,lambda,n1,n2,NA,f_4f,M,resizeFactor);
-
+                FOV_r,lambda,n1,n2,NA,f_4f,M,resizeFactor);
                 labels_mat(:,end+1) = reshape(img, [], 1);
             end 
             
@@ -86,11 +84,11 @@ if class(Emitters) == 'struct'
                     % Generate PSF
                     [img, bfpField] = imgGenerator_fromPupilFunc_new(pupil1,gBlur,nomFocusVec,xyz,nPhotons,bg,...
                         FOV_r,lambda,n1,n2,NA,f_4f,M,resizeFactor);                  
-
+    
                     % Noise
-                    if AddNoiseFlag == 1
-                        img = poissrnd(img);
-                    end
+%                     if AddNoiseFlag == 1
+%                         img = poissrnd(img);
+%                     end
 
                     % Accumulate in a stack
                     %%% ------------------------------------------------------------
@@ -98,10 +96,9 @@ if class(Emitters) == 'struct'
                     %%% ------------------------------------------------------------
                 % Add noise
                 % NEED TO ADD NOISE GENERATION PER FRAME
-                ImPlaneZ(:, :, ii)     = ImPlaneZ(:, :, ii);
-
+                ImPlaneZ(:, :, ii) = ImPlaneZ(:, :, ii);
                 % Normalize each layer for values 0-255
-                ImPlaneZ(:, :, ii)     = ImPlaneZ(:, :, ii)/max(max(ImPlaneZ(:, :, ii)))*255;
+                ImPlaneZ(:, :, ii) = ImPlaneZ(:, :, ii)/max(max(ImPlaneZ(:, :, ii)))*255;
                 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
                 % Rearrange in blocks of [x, y, t, z]. This is for presentation convenience only
@@ -109,8 +106,8 @@ if class(Emitters) == 'struct'
                 
             end
         end
-    end
-
+    end %%end of main for
+    
     %% Take different linear combinations of the planes
     LinComb        = zeros(FOV_r, FOV_r, NumFrames);
     Weights_Acccum = zeros(length(ZposIndex), NumFrames);
@@ -120,8 +117,8 @@ if class(Emitters) == 'struct'
         Weights = ones(length(ZposIndex), 1);
 
         % Take linear combination
-        LinComb(:, :, ii)     = sum(repmat(permute(Weights, [2 3 1]), [FOV_r, FOV_r, 1]).*squeeze(ImPlaneZ(:, :, :, ii)), 3);
-        %LinComb(:, :, ii)     = LinComb(:, :, ii)./max(max(LinComb(:, :, ii)))*255;
+        LinComb(:, :, ii) = sum(repmat(permute(Weights, [2 3 1]), [FOV_r, FOV_r, 1]).*squeeze(ImPlaneZ(:, :, :, ii)), 3);
+        %LinComb(:, :, ii) = LinComb(:, :, ii)./max(max(LinComb(:, :, ii)))*255;
 
         % Accumulate weights
         Weights_Acccum(:, ii) = Weights;
@@ -148,9 +145,10 @@ if class(Emitters) == 'struct'
     % DataSet.X: a cell of samples. Each sample is a movie of blinking LinearCombinations
     % DataSet.y: a cell of tags. Each tag is a packet of source images
 
-    features = cell(1);
-    labels   = cell(1);
+
     if flag_Save2DS == 1 % Currently not in use
+        features = cell(1);
+        labels   = cell(1);
         features{:} = reshape(Sequence2.LinearCombinations, [], 1);
         labels{:}   = reshape(labels_mat, [], 1);
         m = matfile('DataSet.mat','Writable',true);

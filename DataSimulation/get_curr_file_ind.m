@@ -10,11 +10,11 @@ function file_ind = get_curr_file_ind(save_to_dir,file_ind)
     
     original_path = cdir([save_to_dir,'\']); %change to saving destination
     
-    dest_listing = dir
+    dest_listing = dir;
     if ~dest_listing(end).isdir %is empty?
         dest_names = ({dest_listing.name});
         last_file = dest_names{end};
-        file_naming_ind = str2num(last_file(1:end-4)) %remove '.mat'
+        file_naming_ind = str2num(last_file(1:end-4)); %remove '.mat'
     end
     file_ind = file_naming_ind ;
     cd(original_path)

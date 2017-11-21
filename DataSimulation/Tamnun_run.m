@@ -1,3 +1,4 @@
+clear all; close all; clc;
 NumSamples = 2;
 NumFrames  = 20;
 MaxSources = 5;
