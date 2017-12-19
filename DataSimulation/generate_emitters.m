@@ -8,8 +8,8 @@ function emitters = generate_emitters(MaxSources)
 %     MaxSources = 5;
     x_center = 0;
     y_center = 0;
-    x_width = 2e-7;
-    y_width = 2e-7;
+    x_width = 20e-6;
+    y_width = 20e-6;
     
         %%helpers:  
     zVec = linspace(-2e-6,2e-6,NumZplanes+1);

@@ -1,4 +1,4 @@
-function [ Error_vec, Ind_vec ] = error_rateRnd(Emitters, IC, Criterion, Display)
+function [ Error_vec, Ind_vecNZ ] = error_rateRnd(Emitters, IC, Criterion, Display)
 %% Get error per emitter and its matching index
 
 NumSourcesEst = size(IC, 3);
@@ -19,19 +19,15 @@ ii = 1;
     end
 
 %% img display
+Ind_vecNZ = Ind_vec(Ind_vec>0);
+NumSourcesEst = length(Ind_vecNZ);
 if Display == 1
     ii = 1;
         for kk = 1 : NumSourcesEst
-            im = Emitters.y(:,:,kk);
-            % Mean Normalization of Original Sources
-%             im = (im - mean(im(:))) ./ std(im(:));
-%             im = abs(im);
-            % MinMax Normalization of Original Sources
-            % im = (im - min(im(:))) / (max(im(:)) - min(im(:))) + 1;
-           
+            im = Emitters.y(:,:,kk);     
             figure(ii); subplot 121 ; imagesc (im);
                         title('Original');
-                        subplot 122 ; imagesc (IC(:,:,Ind_vec(ii)));
+                        subplot 122 ; imagesc (IC(:,:,Ind_vecNZ(ii)));
                         title('ICA Estimation');
             ii = ii + 1;
         end
