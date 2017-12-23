@@ -13,20 +13,6 @@ function file_ind = get_curr_file_ind(save_to_dir,file_ind)
     dest_listing = dir;
     if ~dest_listing(end).isdir %is empty?
         dest_names = ({dest_listing.name});
-<<<<<<< HEAD
-        dest_names = cellfun(@(x) str2num(x(1:end-4)), dest_names, 'un', 0);
-%         last_file = dest_names{end};
-%         file_naming_ind = str2num(last_file(1:end-4)) %remove '.mat'
-        file_naming_ind = max([dest_names{:}])
-    end
-    
-    
-%     dest_listing = dir
-%     if ~dest_listing(end).isdir %is empty?
-%         dest_names = ({dest_listing.name})
-%         last_file = dest_names{end};
-%         file_naming_ind = str2num(last_file(1:end-4)) %remove '.mat'
-=======
         dest_names = dest_names(~cellfun(@isempty,regexp(dest_names,'.mat'))); % filter files that don't end with .mat
         if (numel(dest_names) == 0)
             file_naming_ind = 0;
@@ -37,7 +23,6 @@ function file_ind = get_curr_file_ind(save_to_dir,file_ind)
     end
 %     if (numel(file_naming_ind) == 0)
 %         file_naming_ind = 0;
->>>>>>> temp-21/11/17
 %     end
     file_ind = file_naming_ind ;
     cd(original_path)

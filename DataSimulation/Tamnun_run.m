@@ -1,5 +1,5 @@
-clear all; close all; clc;
-NumSamples = 10;
-NumFrames  = 40;
-MaxSources = 15;
-Tamnun_gen(NumSamples, NumFrames, MaxSources, 'Dataset2');
+close all; clc;
+NumSamples = 2;
+NumFrames  = 20;
+MaxSources = 5;
+Tamnun_gen(NumSamples, NumFrames, MaxSources, 'Dataset3');
