@@ -1,0 +1,5 @@
+Start Time: 24-Dec-2017 14:30:19
+Creating 100 samples, first file number is: 1
+With 15 frames 
+Max number of sources is: 5
+Finished time: 24-Dec-2017 14:35:41

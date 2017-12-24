@@ -11,7 +11,7 @@ Error_vec = zeros(1, NumSourcesEst);
 
 ii = 1;
     for kk = 1 : NumSourcesEst
-        im = Emitters.y(:,:,kk);
+        im = Emitters.labels(:,:,kk);
         [Error, Ind] = match_by_crit(im, IC, Criterion, Ind_vec);
         Ind_vec(ii) = Ind; 
         Error_vec(ii) = Error;
@@ -24,7 +24,7 @@ NumSourcesEst = length(Ind_vecNZ);
 if Display == 1
     ii = 1;
         for kk = 1 : NumSourcesEst
-            im = Emitters.y(:,:,kk);     
+            im = Emitters.labels(:,:,kk);     
             figure(ii); subplot 121 ; imagesc (im);
                         title('Original');
                         subplot 122 ; imagesc (IC(:,:,Ind_vecNZ(ii)));
