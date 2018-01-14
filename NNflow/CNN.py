@@ -23,6 +23,10 @@ import scipy as sp
 
 FLAGS = None
 
+# Constant Dimensions -- Global
+imgSize = 100
+numFrames = 20  
+maxSources = 5
 
 def deepnn(x):
   """deepnn builds the graph for a deep net for classifying digits.
@@ -35,11 +39,6 @@ def deepnn(x):
     digits 0-9). keep_prob is a scalar placeholder for the probability of
     dropout.
   """
-
-  # Constant Dimensions
-  imgSize = 100
-  numFrames = 20  
-  maxSources = 5
   
   # Reshape to use within a convolutional neural net.
   # Last dimension is for "features" - it would be 1 for grayscale
@@ -50,7 +49,7 @@ def deepnn(x):
 
   # First convolutional layer - maps one grayscale image to 32 feature maps.
   with tf.name_scope('conv1'):
-    W_conv1 = weight_variable([5, 5, 1, 32])
+    W_conv1 = weight_variable([5, 5, numFrames, 32])
     b_conv1 = bias_variable([32])
     h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
 
@@ -71,7 +70,7 @@ def deepnn(x):
   # Fully connected layer 1 -- after 2 round of downsampling, our 28x28 image
   # is down to 7x7x64 feature maps -- maps this to 1024 features.
   # Fully connected layer 1 -- after 2 round of downsampling, our 100x100 image
-  # is down to 25x25x64 feature maps -- maps this to 1024 features.
+  # is down to 25x25x64 feature maps -- maps this to 65536 features.
   with tf.name_scope('fc1'):
     W_fc1 = weight_variable([25 * 25 * 64, 65536])
     b_fc1 = bias_variable([65536])
@@ -121,16 +120,19 @@ def bias_variable(shape):
   initial = tf.constant(0.1, shape=shape)
   return tf.Variable(initial)
 
+def cross_corr(logits, labels, batch_size, maxSources):    
+    y_conv = tf.reshape(logits, [imgSize, imgSize, maxSources*batch_size])
+    y_ = tf.reshape(labels, [imgSize, imgSize, maxSources*batch_size])
+    result = []
+    for j in range(maxSources*batch_size):
+        corr2d = sp.signal.correlate2d(y_[:,:,j], y_conv[:,:,j])
+        result[j] = np.sum(np.reshape(corr2d, [-1, 1]))
+    return np.mean(result)
 
 def main(_):
   # Import data
-  #mnist = input_data.read_data_sets(FLAGS.data_dir, one_hot=True)
   dataObj = load_dataset()
-  
-  # Constant Dimensions
-  imgSize    = 100
-  numFrames  = 20  
-  maxSources = 5
+  batch_size = 2
 
   # Create the model
   x = tf.placeholder(tf.float32, [None, imgSize, imgSize, numFrames])
@@ -142,20 +144,21 @@ def main(_):
   y_conv, keep_prob = deepnn(x)
 
   with tf.name_scope('loss'):
-    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=y_,
-                                                            logits=y_conv)
-  cross_entropy = tf.reduce_mean(cross_entropy)
+#    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=y_,
+#                                                            logits=y_conv)
+    cost = tf.reduce_mean(-tf.reduce_sum(y_*tf.log(y_conv), reduction_indices=1))
+#  cross_entropy = tf.reduce_mean(cross_entropy)
 
   with tf.name_scope('adam_optimizer'):
-    train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
+    train_step = tf.train.AdamOptimizer(1e-4).minimize(cost)
 
 #  with tf.name_scope('accuracy'):
 #    correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
 #    correct_prediction = tf.cast(correct_prediction, tf.float32)
 #  accuracy = tf.reduce_mean(correct_prediction)
     
-   with tf.name_scope('correlation'):
-     corr2 = np.sum()
+  with tf.name_scope('accuracy'):
+     accuracy = cross_corr(y_conv, y_, batch_size, maxSources)
 
 #  graph_location = tempfile.mkdtemp()
 #  print('Saving graph to: %s' % graph_location)
@@ -164,11 +167,10 @@ def main(_):
 
   with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
-    for i in range(20000):
-      batch = dataObj.train.next_batch(1)
+    for i in range(2000):
+      batch = dataObj.train.next_batch(batch_size)
       if i % 100 == 0:
-        train_accuracy = accuracy.eval(feed_dict={
-            x: batch[0], y_: batch[1], keep_prob: 1.0})
+        train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
         print('step %d, training accuracy %g' % (i, train_accuracy))
       train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
 
