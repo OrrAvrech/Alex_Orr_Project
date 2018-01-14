@@ -10,15 +10,16 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import argparse
-import sys
-import tempfile
+#import argparse
+#import sys
+#import tempfile
 
 #from tensorflow.examples.tutorials.mnist import input_data
 from dataset_NEWtf import load_dataset
 
 import tensorflow as tf
-
+import numpy as np
+import scipy as sp
 
 FLAGS = None
 
@@ -38,11 +39,12 @@ def deepnn(x):
   # Constant Dimensions
   imgSize = 100
   numFrames = 20  
+  maxSources = 5
   
   # Reshape to use within a convolutional neural net.
   # Last dimension is for "features" - it would be 1 for grayscale
   # 3 for an RGB image, 4 for RGBA, numFrames for a movie.    
-  with tf.name_scope('reshape'):
+  with tf.name_scope('reshape_x'):
     x_image = tf.reshape(x, [-1, imgSize, imgSize, numFrames])
     # -1 is for the batch size, will be dynamically assigned 
 
@@ -68,11 +70,13 @@ def deepnn(x):
 
   # Fully connected layer 1 -- after 2 round of downsampling, our 28x28 image
   # is down to 7x7x64 feature maps -- maps this to 1024 features.
+  # Fully connected layer 1 -- after 2 round of downsampling, our 100x100 image
+  # is down to 25x25x64 feature maps -- maps this to 1024 features.
   with tf.name_scope('fc1'):
-    W_fc1 = weight_variable([7 * 7 * 64, 1024])
-    b_fc1 = bias_variable([1024])
+    W_fc1 = weight_variable([25 * 25 * 64, 65536])
+    b_fc1 = bias_variable([65536])
 
-    h_pool2_flat = tf.reshape(h_pool2, [-1, 7*7*64])
+    h_pool2_flat = tf.reshape(h_pool2, [-1, 25*25*64])
     h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
 
   # Dropout - controls the complexity of the model, prevents co-adaptation of
@@ -83,10 +87,15 @@ def deepnn(x):
 
   # Map the 1024 features to 10 classes, one for each digit
   with tf.name_scope('fc2'):
-    W_fc2 = weight_variable([1024, 10])
-    b_fc2 = bias_variable([10])
+    W_fc2 = weight_variable([65536, imgSize*imgSize*maxSources])
+    b_fc2 = bias_variable([imgSize*imgSize*maxSources])
 
     y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
+    
+  with tf.name_scope('reshape_y'):
+    y_conv = tf.reshape(x, [-1, imgSize, imgSize, maxSources])
+    # -1 is for the batch size, will be dynamically assigned 
+    
   return y_conv, keep_prob
 
 
@@ -116,16 +125,18 @@ def bias_variable(shape):
 def main(_):
   # Import data
   #mnist = input_data.read_data_sets(FLAGS.data_dir, one_hot=True)
-  path = "C:\\Users\\orrav\\Documents\\Technion\\8th\\Project\\Alex_Orr_Project\\DataSimulation\\DataSetMid\\DatasetS\\Dataset5\\"
-  start_idx=1
-  end_idx=100
-  dataObj = load_dataset(path, start_idx, end_idx)
+  dataObj = load_dataset()
+  
+  # Constant Dimensions
+  imgSize    = 100
+  numFrames  = 20  
+  maxSources = 5
 
   # Create the model
-  x = tf.placeholder(tf.float32, [None, 784])
+  x = tf.placeholder(tf.float32, [None, imgSize, imgSize, numFrames])
 
   # Define loss and optimizer
-  y_ = tf.placeholder(tf.float32, [None, 10])
+  y_ = tf.placeholder(tf.float32, [None, imgSize, imgSize, maxSources])
 
   # Build the graph for the deep net
   y_conv, keep_prob = deepnn(x)
@@ -138,20 +149,23 @@ def main(_):
   with tf.name_scope('adam_optimizer'):
     train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
 
-  with tf.name_scope('accuracy'):
-    correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
-    correct_prediction = tf.cast(correct_prediction, tf.float32)
-  accuracy = tf.reduce_mean(correct_prediction)
+#  with tf.name_scope('accuracy'):
+#    correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
+#    correct_prediction = tf.cast(correct_prediction, tf.float32)
+#  accuracy = tf.reduce_mean(correct_prediction)
+    
+   with tf.name_scope('correlation'):
+     corr2 = np.sum()
 
-  graph_location = tempfile.mkdtemp()
-  print('Saving graph to: %s' % graph_location)
-  train_writer = tf.summary.FileWriter(graph_location)
-  train_writer.add_graph(tf.get_default_graph())
+#  graph_location = tempfile.mkdtemp()
+#  print('Saving graph to: %s' % graph_location)
+#  train_writer = tf.summary.FileWriter(graph_location)
+#  train_writer.add_graph(tf.get_default_graph())
 
   with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
     for i in range(20000):
-      batch = mnist.train.next_batch(50)
+      batch = dataObj.train.next_batch(1)
       if i % 100 == 0:
         train_accuracy = accuracy.eval(feed_dict={
             x: batch[0], y_: batch[1], keep_prob: 1.0})
@@ -159,12 +173,12 @@ def main(_):
       train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
 
     print('test accuracy %g' % accuracy.eval(feed_dict={
-        x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0}))
+        x: dataObj.test.features, y_: dataObj.test.labels, keep_prob: 1.0}))
 
-if __name__ == '__main__':
-  parser = argparse.ArgumentParser()
-  parser.add_argument('--data_dir', type=str,
-                      default='/tmp/tensorflow/mnist/input_data',
-                      help='Directory for storing input data')
-  FLAGS, unparsed = parser.parse_known_args()
-  tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
+#if __name__ == '__main__':
+#  parser = argparse.ArgumentParser()
+#  parser.add_argument('--data_dir', type=str,
+#                      default='/tmp/tensorflow/mnist/input_data',
+#                      help='Directory for storing input data')
+#  FLAGS, unparsed = parser.parse_known_args()
+#  tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)

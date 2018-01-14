@@ -23,8 +23,8 @@ def datasetFromMat(path, start_idx, end_idx, test_perc):
         with h5py.File(data_file, 'r') as f:
             sample_x = np.array(f.get('features'))
             sample_y = np.array(f.get('labels'))
-            sample_y = np.reshape(sample_y, (1,sample_y.shape[0],sample_y.shape[1],sample_y.shape[2]))
-            sample_x = np.reshape(sample_x, (1,sample_x.shape[0],sample_x.shape[1],sample_x.shape[2]))
+            sample_y = np.reshape(sample_y, (1,sample_y.shape[1],sample_y.shape[2],sample_y.shape[0]))
+            sample_x = np.reshape(sample_x, (1,sample_x.shape[1],sample_x.shape[2],sample_x.shape[0]))
             if i == start_idx:
                 dataset_x = sample_x
                 dataset_y = sample_y
@@ -114,8 +114,10 @@ class DataSet(object):
 
 def read_data_sets(path, start_idx, end_idx):
 
+  # Parameters: validation set and test set sizes  
   test_perc = 0.2
   validation_perc = 0.2 # out of train size
+  
   datasetMat = datasetFromMat(path, start_idx, end_idx, test_perc)  
     
   train_features = datasetMat.train_features
@@ -125,13 +127,13 @@ def read_data_sets(path, start_idx, end_idx):
     
   validation_size = np.rint(validation_perc * np.float_(train_features.shape[0].value)).astype(int)
   
-  validation_images = train_features[:validation_size]
+  validation_features = train_features[:validation_size]
   validation_labels = train_labels[:validation_size]
-  train_images = train_features[validation_size:]
+  train_features = train_features[validation_size:]
   train_labels = train_labels[validation_size:]
 
-  train = DataSet(train_images, train_labels)
-  validation = DataSet(validation_images, validation_labels)
+  train = DataSet(train_features, train_labels)
+  validation = DataSet(validation_features, validation_labels)
   test = DataSet(test_features, test_labels)
 
   dataObj = type('', (), {})()
@@ -140,6 +142,9 @@ def read_data_sets(path, start_idx, end_idx):
   dataObj.test = test
   return dataObj
 
-def load_dataset(path, start_idx=1, end_idx=100):
+def load_dataset():
+  path = "C:\\Users\\orrav\\Documents\\Technion\\8th\\Project\\Alex_Orr_Project\\DataSimulation\\DataSetMid\\DatasetS\\Dataset5\\"
+  start_idx = 1
+  end_idx = 100
   return read_data_sets(path, start_idx, end_idx)
 
