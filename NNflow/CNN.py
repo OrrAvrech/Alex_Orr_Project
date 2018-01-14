@@ -14,9 +14,11 @@ import argparse
 import sys
 import tempfile
 
-from tensorflow.examples.tutorials.mnist import input_data
+#from tensorflow.examples.tutorials.mnist import input_data
+from dataset_NEWtf import load_dataset
 
 import tensorflow as tf
+
 
 FLAGS = None
 
@@ -113,7 +115,11 @@ def bias_variable(shape):
 
 def main(_):
   # Import data
-  mnist = input_data.read_data_sets(FLAGS.data_dir, one_hot=True)
+  #mnist = input_data.read_data_sets(FLAGS.data_dir, one_hot=True)
+  path = "C:\\Users\\orrav\\Documents\\Technion\\8th\\Project\\Alex_Orr_Project\\DataSimulation\\DataSetMid\\DatasetS\\Dataset5\\"
+  start_idx=1
+  end_idx=100
+  dataObj = load_dataset(path, start_idx, end_idx)
 
   # Create the model
   x = tf.placeholder(tf.float32, [None, 784])
