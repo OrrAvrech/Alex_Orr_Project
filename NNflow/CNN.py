@@ -10,23 +10,23 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-#import argparse
-#import sys
-#import tempfile
+import argparse
+import sys
+import tempfile
 
 #from tensorflow.examples.tutorials.mnist import input_data
 from dataset_NEWtf import load_dataset
 
 import tensorflow as tf
 import numpy as np
-import scipy as sp
+from scipy import signal
 
 FLAGS = None
 
 # Constant Dimensions -- Global
-imgSize = 100
+imgSize = 200
 numFrames = 20  
-maxSources = 5
+maxSources = 15
 
 def deepnn(x):
   """deepnn builds the graph for a deep net for classifying digits.
@@ -92,7 +92,7 @@ def deepnn(x):
     y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
     
   with tf.name_scope('reshape_y'):
-    y_conv = tf.reshape(x, [-1, imgSize, imgSize, maxSources])
+    y_conv = tf.reshape(y_conv, [-1, imgSize, imgSize, maxSources])
     # -1 is for the batch size, will be dynamically assigned 
     
   return y_conv, keep_prob
@@ -123,13 +123,16 @@ def bias_variable(shape):
 def cross_corr(logits, labels, batch_size, maxSources):    
     y_conv = tf.reshape(logits, [imgSize, imgSize, maxSources*batch_size])
     y_ = tf.reshape(labels, [imgSize, imgSize, maxSources*batch_size])
-    result = []
+    result = 0  
     for j in range(maxSources*batch_size):
-        corr2d = sp.signal.correlate2d(y_[:,:,j], y_conv[:,:,j])
-        result[j] = np.sum(np.reshape(corr2d, [-1, 1]))
-    return np.mean(result)
+        y_resh = tf.reshape(y_[:,:,j], [1, 1, imgSize, imgSize])
+        y_conv_resh = tf.reshape(y_conv[:,:,j], [1, 1, imgSize, imgSize])
+        corr2d = tf.nn.conv2d(y_resh, y_conv_resh, strides=[1, 1, 1, 1], padding='SAME')       
+        result += tf.reduce_sum(corr2d)
+    return (result/(maxSources*batch_size))
 
 def main(_):
+    
   # Import data
   dataObj = load_dataset()
   batch_size = 2
@@ -146,12 +149,12 @@ def main(_):
   with tf.name_scope('loss'):
 #    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=y_,
 #                                                            logits=y_conv)
-    cost = tf.reduce_mean(-tf.reduce_sum(y_*tf.log(y_conv), reduction_indices=1))
+    cost = tf.reduce_mean(tf.losses.mean_squared_error(y_,y_conv))
+#    cost = tf.reduce_mean(-tf.reduce_sum(y_*tf.log(y_conv), reduction_indices=1))
 #  cross_entropy = tf.reduce_mean(cross_entropy)
 
   with tf.name_scope('adam_optimizer'):
     train_step = tf.train.AdamOptimizer(1e-4).minimize(cost)
-
 #  with tf.name_scope('accuracy'):
 #    correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
 #    correct_prediction = tf.cast(correct_prediction, tf.float32)
@@ -169,18 +172,22 @@ def main(_):
     sess.run(tf.global_variables_initializer())
     for i in range(2000):
       batch = dataObj.train.next_batch(batch_size)
-      if i % 100 == 0:
+      train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
+      print('step %d, training accuracy %g' % (i, train_accuracy))
+      if i % 100 == 0: 
         train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
         print('step %d, training accuracy %g' % (i, train_accuracy))
+       
       train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
 
     print('test accuracy %g' % accuracy.eval(feed_dict={
         x: dataObj.test.features, y_: dataObj.test.labels, keep_prob: 1.0}))
 
-#if __name__ == '__main__':
+if __name__ == '__main__':
 #  parser = argparse.ArgumentParser()
 #  parser.add_argument('--data_dir', type=str,
 #                      default='/tmp/tensorflow/mnist/input_data',
 #                      help='Directory for storing input data')
 #  FLAGS, unparsed = parser.parse_known_args()
 #  tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
+  tf.app.run(main=main, argv=[sys.argv[0]])
