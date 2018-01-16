@@ -24,8 +24,8 @@ from scipy import signal
 FLAGS = None
 
 # Constant Dimensions -- Global
-imgSize = 200
-numFrames = 20  
+imgSize = 12
+numFrames = 3  
 maxSources = 15
 
 def deepnn(x):
@@ -44,54 +44,73 @@ def deepnn(x):
   # Last dimension is for "features" - it would be 1 for grayscale
   # 3 for an RGB image, 4 for RGBA, numFrames for a movie.    
   with tf.name_scope('reshape_x'):
+    if __debug__:
+      print("reshape_x:")
     x_image = tf.reshape(x, [-1, imgSize, imgSize, numFrames])
     # -1 is for the batch size, will be dynamically assigned 
 
   # First convolutional layer - maps one grayscale image to 32 feature maps.
   with tf.name_scope('conv1'):
+    if __debug__:
+      print("conv1:")
     W_conv1 = weight_variable([5, 5, numFrames, 32])
     b_conv1 = bias_variable([32])
     h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
 
   # Pooling layer - downsamples by 2X.
   with tf.name_scope('pool1'):
+    if __debug__:
+      print("pool1:")
     h_pool1 = max_pool_2x2(h_conv1)
 
   # Second convolutional layer -- maps 32 feature maps to 64.
   with tf.name_scope('conv2'):
+    if __debug__:
+      print("conv2:")
     W_conv2 = weight_variable([5, 5, 32, 64])
     b_conv2 = bias_variable([64])
     h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
 
   # Second pooling layer.
   with tf.name_scope('pool2'):
+    if __debug__:
+      print("pool2:")
     h_pool2 = max_pool_2x2(h_conv2)
 
   # Fully connected layer 1 -- after 2 round of downsampling, our 28x28 image
   # is down to 7x7x64 feature maps -- maps this to 1024 features.
   # Fully connected layer 1 -- after 2 round of downsampling, our 100x100 image
   # is down to 25x25x64 feature maps -- maps this to 65536 features.
+  fc1_length = 4096
   with tf.name_scope('fc1'):
-    W_fc1 = weight_variable([25 * 25 * 64, 65536])
-    b_fc1 = bias_variable([65536])
+    if __debug__:
+      print("fc1:")
+    W_fc1 = weight_variable([int(imgSize/4) * int(imgSize/4) * 64, fc1_length])
+    b_fc1 = bias_variable([fc1_length])
 
-    h_pool2_flat = tf.reshape(h_pool2, [-1, 25*25*64])
+    h_pool2_flat = tf.reshape(h_pool2, [-1, int(imgSize/4)*int(imgSize/4)*64])
     h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
 
   # Dropout - controls the complexity of the model, prevents co-adaptation of
   # features.
   with tf.name_scope('dropout'):
+    if __debug__:
+      print("dropout:")
     keep_prob = tf.placeholder(tf.float32)
     h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
   # Map the 1024 features to 10 classes, one for each digit
   with tf.name_scope('fc2'):
-    W_fc2 = weight_variable([65536, imgSize*imgSize*maxSources])
+    if __debug__:
+      print("fc2:")
+    W_fc2 = weight_variable([fc1_length, imgSize*imgSize*maxSources])
     b_fc2 = bias_variable([imgSize*imgSize*maxSources])
 
     y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
     
   with tf.name_scope('reshape_y'):
+    if __debug__:
+      print("reshape_y:")
     y_conv = tf.reshape(y_conv, [-1, imgSize, imgSize, maxSources])
     # -1 is for the batch size, will be dynamically assigned 
     
@@ -100,41 +119,56 @@ def deepnn(x):
 
 def conv2d(x, W):
   """conv2d returns a 2d convolution layer with full stride."""
+  if __debug__:
+    print("conv2d:")
   return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
 
 
 def max_pool_2x2(x):
   """max_pool_2x2 downsamples a feature map by 2X."""
+  if __debug__:
+    print("max_pool_2x2:")
   return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
                         strides=[1, 2, 2, 1], padding='SAME')
 
 
 def weight_variable(shape):
   """weight_variable generates a weight variable of a given shape."""
+  if __debug__:
+    print("weight_variable:")
   initial = tf.truncated_normal(shape, stddev=0.1)
   return tf.Variable(initial)
 
 
 def bias_variable(shape):
   """bias_variable generates a bias variable of a given shape."""
+  if __debug__:
+    print("bias_variable:")
   initial = tf.constant(0.1, shape=shape)
   return tf.Variable(initial)
 
-def cross_corr(logits, labels, batch_size, maxSources):    
-    y_conv = tf.reshape(logits, [imgSize, imgSize, maxSources*batch_size])
-    y_ = tf.reshape(labels, [imgSize, imgSize, maxSources*batch_size])
+def cross_corr(logits, labels, size, maxSources):
+    if __debug__:
+      print("cross_corr:")
+    size = int(size)
+    print(logits.shape)  
+    print(labels.shape)  
+    print(size)
+    y_conv = tf.reshape(logits, [imgSize, imgSize, maxSources*size])
+    y_ = tf.reshape(labels, [imgSize, imgSize, maxSources*size])
     result = 0  
-    for j in range(maxSources*batch_size):
+    for j in range(maxSources*int(size)):
         y_resh = tf.reshape(y_[:,:,j], [1, 1, imgSize, imgSize])
         y_conv_resh = tf.reshape(y_conv[:,:,j], [1, 1, imgSize, imgSize])
         corr2d = tf.nn.conv2d(y_resh, y_conv_resh, strides=[1, 1, 1, 1], padding='SAME')       
         result += tf.reduce_sum(corr2d)
-    return (result/(maxSources*batch_size))
+    return (result/(maxSources*size))
 
 def main(_):
     
   # Import data
   dataObj = load_dataset()
+  print("loaded data")
   batch_size = 2
 
   # Create the model
@@ -142,6 +176,7 @@ def main(_):
 
   # Define loss and optimizer
   y_ = tf.placeholder(tf.float32, [None, imgSize, imgSize, maxSources])
+  size = tf.Variable(0)
 
   # Build the graph for the deep net
   y_conv, keep_prob = deepnn(x)
@@ -161,7 +196,7 @@ def main(_):
 #  accuracy = tf.reduce_mean(correct_prediction)
     
   with tf.name_scope('accuracy'):
-     accuracy = cross_corr(y_conv, y_, batch_size, maxSources)
+     accuracy = cross_corr(y_conv, y_, size, maxSources)
 
 #  graph_location = tempfile.mkdtemp()
 #  print('Saving graph to: %s' % graph_location)
@@ -170,9 +205,10 @@ def main(_):
 
   with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
-    for i in range(2000):
+    for i in range(20):
+      print(i)
       batch = dataObj.train.next_batch(batch_size)
-      train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
+      train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0, size: batch_size})
       print('step %d, training accuracy %g' % (i, train_accuracy))
       if i % 100 == 0: 
         train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
@@ -180,8 +216,10 @@ def main(_):
        
       train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
 
+    print("test features.shape are:"+str(dataObj.test.features.shape))
+    print("test labels.shape are:"+str(dataObj.test.labels.shape))
     print('test accuracy %g' % accuracy.eval(feed_dict={
-        x: dataObj.test.features, y_: dataObj.test.labels, keep_prob: 1.0}))
+        x: dataObj.test.features, y_: dataObj.test.labels, keep_prob: 1.0, size: 10}))
 
 if __name__ == '__main__':
 #  parser = argparse.ArgumentParser()
@@ -190,4 +228,6 @@ if __name__ == '__main__':
 #                      help='Directory for storing input data')
 #  FLAGS, unparsed = parser.parse_known_args()
 #  tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
+  if __debug__:
+    print("started")
   tf.app.run(main=main, argv=[sys.argv[0]])

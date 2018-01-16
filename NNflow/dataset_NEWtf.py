@@ -21,8 +21,12 @@ def datasetFromMat(path, start_idx, end_idx, test_perc):
     for i in range(start_idx, end_idx):
         data_file = os.path.join(data_dir, str(i)+ '.mat')
         with h5py.File(data_file, 'r') as f:
-            sample_x = np.array(f.get('features'))
-            sample_y = np.array(f.get('labels'))
+            sample_x = np.array(f.get('x'))
+            sample_y = np.array(f.get('y'))
+            
+            sample_x = sample_x[1:4, 1:13, 1:13]            
+            sample_y = sample_y[:, 1:13, 1:13]
+            
             sample_y = np.reshape(sample_y, (1,sample_y.shape[1],sample_y.shape[2],sample_y.shape[0]))
             sample_x = np.reshape(sample_x, (1,sample_x.shape[1],sample_x.shape[2],sample_x.shape[0]))
             if i == start_idx:
@@ -38,8 +42,10 @@ def datasetFromMat(path, start_idx, end_idx, test_perc):
     test_size = np.rint(test_perc * dataset_size).astype(int) # round to int
     train_size = dataset_size - test_size  
     
-    train_features, test_features = tf.split(features, [train_size, test_size]) 
-    train_labels, test_labels = tf.split(labels, [train_size, test_size])                                           
+#    train_features, test_features = tf.split(features, [train_size, test_size]) 
+#    train_labels, test_labels = tf.split(labels, [train_size, test_size])                                           
+    train_features, test_features = np.split(features, [train_size]) 
+    train_labels, test_labels = np.split(labels, [train_size])       
                                                
     datasetMat = type('', (), {})()
     datasetMat.train_features = train_features
@@ -55,10 +61,25 @@ class DataSet(object):
                features,
                labels):
     """Construct a DataSet"""
+    assert features.shape[0] == labels.shape[0], (
+        'images.shape: %s labels.shape: %s' % (features.shape, labels.shape))
+    self._num_examples = int(features.shape[0])
+    print ("_num examples is : "+str(features.shape[0]))
+    # Convert shape from [num examples, rows, columns, depth]
+    # to [num examples, rows*columns] (assuming depth == 1)
+#    if reshape:
+#      assert images.shape[3] == 1
+#      images = images.reshape(features.shape[0],
+#                              features.shape[1] * images.shape[2])
+#    if dtype == dtypes.float32:
+#      # Convert from [0, 255] -> [0.0, 1.0].
+#      features = features.astype(numpy.float32)
+#      features = numpy.multiply(features, 1.0 / 255.0)
     self._features = features
     self._labels = labels
     self._epochs_completed = 0
     self._index_in_epoch = 0
+#    self._num_examples = int(features.shape[0])
 
   @property
   def features(self):
@@ -81,7 +102,9 @@ class DataSet(object):
     start = self._index_in_epoch
     # Shuffle for the first epoch
     if self._epochs_completed == 0 and start == 0 and shuffle:
+      print
       perm0 = np.arange(self._num_examples)
+      print("perm0 is:" + str(perm0))
       np.random.shuffle(perm0)
       self._features = self.features[perm0]
       self._labels = self.labels[perm0]
@@ -125,7 +148,7 @@ def read_data_sets(path, start_idx, end_idx):
   test_features  = datasetMat.test_features
   test_labels    = datasetMat.test_labels
     
-  validation_size = np.rint(validation_perc * np.float_(train_features.shape[0].value)).astype(int)
+  validation_size = np.rint(validation_perc * np.float_(train_features.shape[0])).astype(int)
   
   validation_features = train_features[:validation_size]
   validation_labels = train_labels[:validation_size]
@@ -143,8 +166,8 @@ def read_data_sets(path, start_idx, end_idx):
   return dataObj
 
 def load_dataset():
-  path = "C:\\Users\\orrav\\Documents\\Technion\\8th\\Project\\Alex_Orr_Project\\DataSimulation\\DataSetMid\\DatasetS\\Dataset5\\"
+  path = "P:\\Alex_Orr_Project\\DataSimulation\\final_Dataset_1\\"
   start_idx = 1
-  end_idx = 100
+  end_idx = 50
   return read_data_sets(path, start_idx, end_idx)
 
