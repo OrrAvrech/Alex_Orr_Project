@@ -18,6 +18,7 @@ import tempfile
 from dataset_NEWtf import load_dataset
 
 import tensorflow as tf
+import os
 import numpy as np
 from scipy import signal
 
@@ -26,7 +27,7 @@ FLAGS = None
 # Constant Dimensions -- Global
 imgSize = 12
 numFrames = 3  
-maxSources = 15
+maxSources = 5
 
 def deepnn(x):
   """deepnn builds the graph for a deep net for classifying digits.
@@ -147,22 +148,19 @@ def bias_variable(shape):
   initial = tf.constant(0.1, shape=shape)
   return tf.Variable(initial)
 
-def cross_corr(logits, labels, size, maxSources):
+def cross_corr(logits, labels, maxSources):
     if __debug__:
       print("cross_corr:")
-    size = int(size)
     print(logits.shape)  
     print(labels.shape)  
-    print(size)
-    y_conv = tf.reshape(logits, [imgSize, imgSize, maxSources*size])
-    y_ = tf.reshape(labels, [imgSize, imgSize, maxSources*size])
+    y_conv = tf.reshape(logits, [imgSize, imgSize, -1])
+    y_ = tf.reshape(labels, [imgSize, imgSize, -1])
     result = 0  
-    for j in range(maxSources*int(size)):
-        y_resh = tf.reshape(y_[:,:,j], [1, 1, imgSize, imgSize])
-        y_conv_resh = tf.reshape(y_conv[:,:,j], [1, 1, imgSize, imgSize])
-        corr2d = tf.nn.conv2d(y_resh, y_conv_resh, strides=[1, 1, 1, 1], padding='SAME')       
-        result += tf.reduce_sum(corr2d)
-    return (result/(maxSources*size))
+    y_resh = tf.reshape(y_, [1, -1, imgSize, imgSize])
+    y_conv_resh = tf.reshape(y_conv, [1, -1, imgSize, imgSize])
+    corr2d = tf.nn.conv2d(y_resh, y_conv_resh, strides=[1, 1, 1, 1], padding='SAME')       
+    result = tf.reduce_mean(corr2d)
+    return abs(result)
 
 def main(_):
     
@@ -176,7 +174,6 @@ def main(_):
 
   # Define loss and optimizer
   y_ = tf.placeholder(tf.float32, [None, imgSize, imgSize, maxSources])
-  size = tf.Variable(0)
 
   # Build the graph for the deep net
   y_conv, keep_prob = deepnn(x)
@@ -196,7 +193,7 @@ def main(_):
 #  accuracy = tf.reduce_mean(correct_prediction)
     
   with tf.name_scope('accuracy'):
-     accuracy = cross_corr(y_conv, y_, size, maxSources)
+     accuracy = cross_corr(y_conv, y_, maxSources)
 
 #  graph_location = tempfile.mkdtemp()
 #  print('Saving graph to: %s' % graph_location)
@@ -208,7 +205,7 @@ def main(_):
     for i in range(20):
       print(i)
       batch = dataObj.train.next_batch(batch_size)
-      train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0, size: batch_size})
+      train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
       print('step %d, training accuracy %g' % (i, train_accuracy))
       if i % 100 == 0: 
         train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
@@ -219,7 +216,7 @@ def main(_):
     print("test features.shape are:"+str(dataObj.test.features.shape))
     print("test labels.shape are:"+str(dataObj.test.labels.shape))
     print('test accuracy %g' % accuracy.eval(feed_dict={
-        x: dataObj.test.features, y_: dataObj.test.labels, keep_prob: 1.0, size: 10}))
+        x: dataObj.test.features, y_: dataObj.test.labels, keep_prob: 1.0}))
 
 if __name__ == '__main__':
 #  parser = argparse.ArgumentParser()
