@@ -21,8 +21,8 @@ def datasetFromMat(path, start_idx, end_idx, test_perc):
     for i in range(start_idx, end_idx):
         data_file = os.path.join(data_dir, str(i)+ '.mat')
         with h5py.File(data_file, 'r') as f:
-            sample_x = np.array(f.get('x'))
-            sample_y = np.array(f.get('y'))
+            sample_x = np.array(f.get('features'))
+            sample_y = np.array(f.get('labels'))
             
             sample_x = sample_x[1:4, 1:13, 1:13]            
             sample_y = sample_y[:, 1:13, 1:13]
@@ -65,21 +65,10 @@ class DataSet(object):
         'images.shape: %s labels.shape: %s' % (features.shape, labels.shape))
     self._num_examples = int(features.shape[0])
     print ("_num examples is : "+str(features.shape[0]))
-    # Convert shape from [num examples, rows, columns, depth]
-    # to [num examples, rows*columns] (assuming depth == 1)
-#    if reshape:
-#      assert images.shape[3] == 1
-#      images = images.reshape(features.shape[0],
-#                              features.shape[1] * images.shape[2])
-#    if dtype == dtypes.float32:
-#      # Convert from [0, 255] -> [0.0, 1.0].
-#      features = features.astype(numpy.float32)
-#      features = numpy.multiply(features, 1.0 / 255.0)
     self._features = features
     self._labels = labels
     self._epochs_completed = 0
     self._index_in_epoch = 0
-#    self._num_examples = int(features.shape[0])
 
   @property
   def features(self):
@@ -166,7 +155,7 @@ def read_data_sets(path, start_idx, end_idx):
   return dataObj
 
 def load_dataset():
-  path = "P:\\Alex_Orr_Project\\DataSimulation\\final_Dataset_1\\"
+  path = "C:\\Users\\orrav\\Documents\\Technion\\8th\\Project\\Alex_Orr_Project\\DataSimulation\\DataSetMid\\DatasetS\\Dataset5\\"
   start_idx = 1
   end_idx = 50
   return read_data_sets(path, start_idx, end_idx)
