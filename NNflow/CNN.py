@@ -27,7 +27,7 @@ FLAGS = None
 # Constant Dimensions -- Global
 imgSize = 12
 numFrames = 3  
-maxSources = 5
+maxSources = 15
 
 def deepnn(x):
   """deepnn builds the graph for a deep net for classifying digits.
@@ -153,21 +153,25 @@ def cross_corr(logits, labels, maxSources):
       print("cross_corr:")
     print(logits.shape)  
     print(labels.shape)  
-    y_conv = tf.reshape(logits, [imgSize, imgSize, -1])
-    y_ = tf.reshape(labels, [imgSize, imgSize, -1])
+#    y_conv = tf.reshape(logits, [imgSize, imgSize, -1])
+    y_conv = logits
+    y_ = tf.reshape(labels, [imgSize, imgSize, maxSources, -1])
+#    y_ = tf.reshape(labels, [imgSize, imgSize, -1])
+#    y_resh = tf.reshape(y_, [1, -1, imgSize, imgSize])
+#    y_conv_resh = tf.reshape(y_conv, [1, -1, imgSize, imgSize])
     result = 0  
-    y_resh = tf.reshape(y_, [1, -1, imgSize, imgSize])
-    y_conv_resh = tf.reshape(y_conv, [1, -1, imgSize, imgSize])
-    corr2d = tf.nn.conv2d(y_resh, y_conv_resh, strides=[1, 1, 1, 1], padding='SAME')       
+#    corr2d = tf.nn.conv2d(y_resh, y_conv_resh, strides=[1, 1, 1, 1], padding='SAME')       
+    corr2d = tf.nn.conv2d(y_conv, y_, strides=[1, 1, 1, 1], padding='SAME')
+    print(corr2d.shape)       
     result = tf.reduce_mean(corr2d)
-    return abs(result)
+    return result
 
 def main(_):
     
   # Import data
   dataObj = load_dataset()
   print("loaded data")
-  batch_size = 2
+  batch_size = 1
 
   # Create the model
   x = tf.placeholder(tf.float32, [None, imgSize, imgSize, numFrames])

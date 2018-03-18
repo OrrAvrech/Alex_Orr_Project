@@ -21,8 +21,8 @@ def datasetFromMat(path, start_idx, end_idx, test_perc):
     for i in range(start_idx, end_idx):
         data_file = os.path.join(data_dir, str(i)+ '.mat')
         with h5py.File(data_file, 'r') as f:
-            sample_x = np.array(f.get('features'))
-            sample_y = np.array(f.get('labels'))
+            sample_x = np.array(f.get('x'))
+            sample_y = np.array(f.get('y'))
             
             sample_x = sample_x[1:4, 1:13, 1:13]            
             sample_y = sample_y[:, 1:13, 1:13]
@@ -155,7 +155,7 @@ def read_data_sets(path, start_idx, end_idx):
   return dataObj
 
 def load_dataset():
-  path = "C:\\Users\\orrav\\Documents\\Technion\\8th\\Project\\Alex_Orr_Project\\DataSimulation\\DataSetMid\\DatasetS\\Dataset5\\"
+  path = "P:\\Alex_Orr_Project\\DataSimulation\\final_Dataset_1\\"
   start_idx = 1
   end_idx = 50
   return read_data_sets(path, start_idx, end_idx)
