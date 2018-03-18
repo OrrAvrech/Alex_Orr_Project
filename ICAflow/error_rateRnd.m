@@ -5,14 +5,12 @@ NumSourcesEst = size(IC, 3);
 Ind_vec = zeros(1, NumSourcesEst);
 Error_vec = zeros(1, NumSourcesEst);
 
-% MaxSources = size(Emitters.dat.y, 3);
-% Ind_vec = zeros(1, MaxSources);
-% Error_vec = zeros(1, MaxSources);
-
 ii = 1;
     for kk = 1 : NumSourcesEst
         im = Emitters.labels(:,:,kk);
-        [Error, Ind] = match_by_crit(im, IC, Criterion, Ind_vec);
+        % MeanStd Normalization
+            im = (im - mean(im(:)))./std(im(:));
+        [Error, Ind] = match_by_crit(im, IC, Criterion, Ind_vec); % Both normalized
         Ind_vec(ii) = Ind; 
         Error_vec(ii) = Error;
         ii = ii + 1;

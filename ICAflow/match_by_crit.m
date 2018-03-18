@@ -13,7 +13,7 @@ if enable
     im = SingleImg; % Single Tetrapod Image 
     % MinMax Normalization of Original Sources
     %im = (im - min(im(:))) / (max(im(:)) - min(im(:)));
-    im = im / mean(im(:));
+    %im = im - mean(im(:));
     
     
     % Go over all IC's diff from already used indices

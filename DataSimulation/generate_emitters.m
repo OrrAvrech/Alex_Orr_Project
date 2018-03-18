@@ -5,17 +5,16 @@ function emitters = generate_emitters(MaxSources)
         
         %%choose:
     NumZplanes = 80;
-%     MaxSources = 5;
     x_center = 0;
     y_center = 0;
-    x_width = 20e-6;
-    y_width = 20e-6;
+    x_width = 10e-6;
+    y_width = 10e-6;
     
         %%helpers:  
     zVec = linspace(-2e-6,2e-6,NumZplanes+1);
 
         %%stochastic:
-    NumSources = randi(MaxSources);
+    NumSources = randi(MaxSources-1)+1;
         %%actual data:
     x = (rand(1,NumSources)+x_center-0.5)*x_width/2;
     y = (rand(1,NumSources)+y_center-0.5)*y_width/2;

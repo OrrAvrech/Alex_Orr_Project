@@ -25,11 +25,11 @@ from scipy import signal
 FLAGS = None
 
 # Constant Dimensions -- Global
-imgSize = 12
-numFrames = 3  
-maxSources = 15
+#imgSize = 12
+#numFrames = 3  
+#maxSources = 15
 
-def deepnn(x):
+def deepnn(x,data_params):
   """deepnn builds the graph for a deep net for classifying digits.
   Args:
     x: an input tensor with the dimensions (N_examples, 784), where 784 is the
@@ -44,6 +44,9 @@ def deepnn(x):
   # Reshape to use within a convolutional neural net.
   # Last dimension is for "features" - it would be 1 for grayscale
   # 3 for an RGB image, 4 for RGBA, numFrames for a movie.    
+  maxSources = data_params["maxSources"]
+  imgSize = data_params["imgSize"]
+  numFrames = data_params["numFrames"]
   with tf.name_scope('reshape_x'):
     if __debug__:
       print("reshape_x:")
@@ -148,7 +151,9 @@ def bias_variable(shape):
   initial = tf.constant(0.1, shape=shape)
   return tf.Variable(initial)
 
-def cross_corr(logits, labels, maxSources, batch_size):
+def cross_corr(logits, labels, batch_size, data_params):
+    maxSources = data_params["maxSources"]
+    imgSize = data_params["imgSize"]
     if __debug__:
       print("cross_corr:")
     for i in range(batch_size):  
@@ -165,8 +170,12 @@ def cross_corr(logits, labels, maxSources, batch_size):
 def main(_):
     
   # Import data
-  dataObj = load_dataset()
+  dataObj, imgSize, numFrames, maxSources = load_dataset()
+  data_params = {"imgSize":imgSize, "numFrames":numFrames, "maxSources":maxSources}
   print("loaded data")
+  print("imgSize is:" +str(imgSize))
+  print("numFrames is:" +str(numFrames))
+  print("maxSources is:" +str(maxSources))
   batch_size = 1
 
   # Create the model
@@ -176,7 +185,7 @@ def main(_):
   y_ = tf.placeholder(tf.float32, [None, imgSize, imgSize, maxSources])
 
   # Build the graph for the deep net
-  y_conv, keep_prob = deepnn(x)
+  y_conv, keep_prob = deepnn(x,data_params)
 
   with tf.name_scope('loss'):
 #    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=y_,
@@ -193,7 +202,7 @@ def main(_):
 #  accuracy = tf.reduce_mean(correct_prediction)
     
   with tf.name_scope('accuracy'):
-     accuracy = cross_corr(y_conv, y_, maxSources, batch_size)
+     accuracy = cross_corr(y_conv, y_, batch_size, data_params)
 
 #  graph_location = tempfile.mkdtemp()
 #  print('Saving graph to: %s' % graph_location)

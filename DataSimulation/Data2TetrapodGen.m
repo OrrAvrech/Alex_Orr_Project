@@ -21,7 +21,7 @@ f_4f               = 15e-2;                    % 4f lens focal length
 M                  = 100;                      % magnification
 resizeFactor       = 1/4;                      % numerical sampling of EM field (low = better sampling)
 gBlur              = 0.5;                      % extra PSF blur factor
-FOV_r              = 100;                      % Field of view of the image. Measured in #pixels and assumed squared image
+FOV_r              = 64;                       % Field of view of the image. Measured in #pixels and assumed squared image
 n1                 = 1.518;                    % ref index
 n2                 = n1;                       % ???
 nPhotons           = 1000;                     % signal photons

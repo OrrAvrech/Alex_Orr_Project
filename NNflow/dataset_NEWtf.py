@@ -24,8 +24,8 @@ def datasetFromMat(path, start_idx, end_idx, test_perc):
             sample_x = np.array(f.get('x'))
             sample_y = np.array(f.get('y'))
             
-            sample_x = sample_x[1:4, 1:13, 1:13]            
-            sample_y = sample_y[:, 1:13, 1:13]
+#            sample_x = sample_x[1:4, 1:13, 1:13]            
+#            sample_y = sample_y[:, 1:13, 1:13]
             
             sample_y = np.reshape(sample_y, (1,sample_y.shape[1],sample_y.shape[2],sample_y.shape[0]))
             sample_x = np.reshape(sample_x, (1,sample_x.shape[1],sample_x.shape[2],sample_x.shape[0]))
@@ -35,15 +35,16 @@ def datasetFromMat(path, start_idx, end_idx, test_perc):
             else:
                 dataset_x = np.append(dataset_x,sample_x, axis=0)
                 dataset_y = np.append(dataset_y,sample_y, axis=0)
-    features = dataset_x
+    # Normalized features
+    features = (dataset_x - np.mean(dataset_x))/np.std(dataset_x)
     labels = dataset_y
-    
+    imgSize = features.shape[1]
+    numFrames = features.shape[3]
+    maxSources = labels.shape[3]
     dataset_size = features.shape[0]
     test_size = np.rint(test_perc * dataset_size).astype(int) # round to int
     train_size = dataset_size - test_size  
-    
-#    train_features, test_features = tf.split(features, [train_size, test_size]) 
-#    train_labels, test_labels = tf.split(labels, [train_size, test_size])                                           
+                                        
     train_features, test_features = np.split(features, [train_size]) 
     train_labels, test_labels = np.split(labels, [train_size])       
                                                
@@ -52,8 +53,7 @@ def datasetFromMat(path, start_idx, end_idx, test_perc):
     datasetMat.train_labels   = train_labels
     datasetMat.test_features  = test_features
     datasetMat.test_labels    = test_labels
-#    dataset = tf.data.Dataset.from_tensor_slices((features, labels))
-    return datasetMat
+    return datasetMat, imgSize, numFrames, maxSources
 
 class DataSet(object):
 
@@ -130,7 +130,7 @@ def read_data_sets(path, start_idx, end_idx):
   test_perc = 0.2
   validation_perc = 0.2 # out of train size
   
-  datasetMat = datasetFromMat(path, start_idx, end_idx, test_perc)  
+  datasetMat, imgSize, numFrames, maxSources = datasetFromMat(path, start_idx, end_idx, test_perc)  
     
   train_features = datasetMat.train_features
   train_labels   = datasetMat.train_labels  
@@ -152,7 +152,7 @@ def read_data_sets(path, start_idx, end_idx):
   dataObj.train = train
   dataObj.validation = validation
   dataObj.test = test
-  return dataObj
+  return dataObj, imgSize, numFrames, maxSources
 
 def load_dataset():
   path = "P:\\Alex_Orr_Project\\DataSimulation\\final_Dataset_1\\"

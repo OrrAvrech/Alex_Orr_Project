@@ -16,11 +16,11 @@ IC_num = size(s, 1);
 s_img_mat = zeros(size_lincomb(1), size_lincomb(2), IC_num);
 for j = 1 : IC_num
     s_img_mat(:,:,j) = reshape(s(j,:), size_lincomb(1), size_lincomb(2));
-    % MeanStd Normalization
+    SingleEstImg = s_img_mat(:,:,j);
     % MinMax Normalization
-          SingleEstImg = s_img_mat(:,:,j);
-%    SingleEstImg = (SingleEstImg - min(SingleEstImg(:))) / (max(SingleEstImg(:)) - min(SingleEstImg(:)));
-         SingleEstImg = SingleEstImg / mean(SingleEstImg(:));
+        %SingleEstImg = (SingleEstImg - min(SingleEstImg(:))) / (max(SingleEstImg(:)) - min(SingleEstImg(:)));
+    % MeanStd Normalization
+         SingleEstImg = (SingleEstImg - mean(SingleEstImg(:)))./std(SingleEstImg(:));
          s_img_mat(:,:,j) = SingleEstImg;
 end
 IC = s_img_mat;
