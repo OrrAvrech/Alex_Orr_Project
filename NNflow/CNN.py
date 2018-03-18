@@ -148,23 +148,19 @@ def bias_variable(shape):
   initial = tf.constant(0.1, shape=shape)
   return tf.Variable(initial)
 
-def cross_corr(logits, labels, maxSources):
+def cross_corr(logits, labels, maxSources, batch_size):
     if __debug__:
       print("cross_corr:")
-    print(logits.shape)  
-    print(labels.shape)  
-#    y_conv = tf.reshape(logits, [imgSize, imgSize, -1])
-    y_conv = logits
-    y_ = tf.reshape(labels, [imgSize, imgSize, maxSources, -1])
-#    y_ = tf.reshape(labels, [imgSize, imgSize, -1])
-#    y_resh = tf.reshape(y_, [1, -1, imgSize, imgSize])
-#    y_conv_resh = tf.reshape(y_conv, [1, -1, imgSize, imgSize])
-    result = 0  
-#    corr2d = tf.nn.conv2d(y_resh, y_conv_resh, strides=[1, 1, 1, 1], padding='SAME')       
-    corr2d = tf.nn.conv2d(y_conv, y_, strides=[1, 1, 1, 1], padding='SAME')
-    print(corr2d.shape)       
-    result = tf.reduce_mean(corr2d)
-    return result
+    for i in range(batch_size):  
+        y_conv = logits[i, 0:imgSize, 0:imgSize, 0:maxSources]
+        y_conv = tf.reshape(y_conv, [1, imgSize, imgSize, maxSources])
+        label_resh = tf.reshape(labels, [imgSize, imgSize, maxSources, -1])
+        y_ = label_resh[0:imgSize, 0:imgSize, 0:maxSources, i]
+        y_ = tf.reshape(y_, [imgSize, imgSize, maxSources, 1])
+        result = 0  
+        corr2d = tf.nn.conv2d(y_conv, y_, strides=[1, 1, 1, 1], padding='SAME')
+        result += tf.reduce_mean(corr2d)
+    return result/batch_size
 
 def main(_):
     
@@ -197,7 +193,7 @@ def main(_):
 #  accuracy = tf.reduce_mean(correct_prediction)
     
   with tf.name_scope('accuracy'):
-     accuracy = cross_corr(y_conv, y_, maxSources)
+     accuracy = cross_corr(y_conv, y_, maxSources, batch_size)
 
 #  graph_location = tempfile.mkdtemp()
 #  print('Saving graph to: %s' % graph_location)
