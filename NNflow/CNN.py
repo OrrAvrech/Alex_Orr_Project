@@ -57,8 +57,8 @@ def deepnn(x,data_params):
   with tf.name_scope('conv1'):
     if __debug__:
       print("conv1:")
-    W_conv1 = weight_variable([5, 5, numFrames, 32])
-    b_conv1 = bias_variable([32])
+    W_conv1 = weight_variable([5, 5, numFrames, 16])
+    b_conv1 = bias_variable([16])
     h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
 
   # Pooling layer - downsamples by 2X.
@@ -71,8 +71,8 @@ def deepnn(x,data_params):
   with tf.name_scope('conv2'):
     if __debug__:
       print("conv2:")
-    W_conv2 = weight_variable([5, 5, 32, 64])
-    b_conv2 = bias_variable([64])
+    W_conv2 = weight_variable([5, 5, 16, 16])
+    b_conv2 = bias_variable([16])
     h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
 
   # Second pooling layer.
@@ -85,14 +85,14 @@ def deepnn(x,data_params):
   # is down to 7x7x64 feature maps -- maps this to 1024 features.
   # Fully connected layer 1 -- after 2 round of downsampling, our 100x100 image
   # is down to 25x25x64 feature maps -- maps this to 65536 features.
-  fc1_length = 4096
+  fc1_length = 2048
   with tf.name_scope('fc1'):
     if __debug__:
       print("fc1:")
-    W_fc1 = weight_variable([int(imgSize/4) * int(imgSize/4) * 64, fc1_length])
+    W_fc1 = weight_variable([int(imgSize/4) * int(imgSize/4) * 16, fc1_length])
     b_fc1 = bias_variable([fc1_length])
 
-    h_pool2_flat = tf.reshape(h_pool2, [-1, int(imgSize/4)*int(imgSize/4)*64])
+    h_pool2_flat = tf.reshape(h_pool2, [-1, int(imgSize/4)*int(imgSize/4)*16])
     h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
 
   # Dropout - controls the complexity of the model, prevents co-adaptation of
@@ -168,34 +168,40 @@ def cross_corr(logits, labels, batch_size, data_params):
     return result/batch_size
 
 def main(_):
+     
+  # Append the number of training steps our model has gone through
+  # In a variable called global_step
+  global_step = tf.Variable(0, dtype=tf.int32, trainable=False, name="global_step")
     
-  # Import data
-  dataObj, imgSize, numFrames, maxSources = load_dataset()
-  data_params = {"imgSize":imgSize, "numFrames":numFrames, "maxSources":maxSources}
-  print("loaded data")
-  print("imgSize is:" +str(imgSize))
-  print("numFrames is:" +str(numFrames))
-  print("maxSources is:" +str(maxSources))
-  batch_size = 1
+  with tf.name_scope('data'):  
+      # Import data
+      dataObj, imgSize, numFrames, maxSources = load_dataset()
+      data_params = {"imgSize":imgSize, "numFrames":numFrames, "maxSources":maxSources}
+      print("loaded data")
+      print("imgSize is:" +str(imgSize))
+      print("numFrames is:" +str(numFrames))
+      print("maxSources is:" +str(maxSources))
+      batch_size = 1
 
   # Create the model
   x = tf.placeholder(tf.float32, [None, imgSize, imgSize, numFrames])
-
-  # Define loss and optimizer
   y_ = tf.placeholder(tf.float32, [None, imgSize, imgSize, maxSources])
 
   # Build the graph for the deep net
   y_conv, keep_prob = deepnn(x,data_params)
 
+  # Define loss and optimizer
   with tf.name_scope('loss'):
 #    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=y_,
 #                                                            logits=y_conv)
     cost = tf.reduce_mean(tf.losses.mean_squared_error(y_,y_conv))
 #    cost = tf.reduce_mean(-tf.reduce_sum(y_*tf.log(y_conv), reduction_indices=1))
 #  cross_entropy = tf.reduce_mean(cross_entropy)
+    
 
   with tf.name_scope('adam_optimizer'):
-    train_step = tf.train.AdamOptimizer(1e-4).minimize(cost)
+    lr = 1e-4
+    train_step = tf.train.AdamOptimizer(lr).minimize(cost, global_step=global_step)
 #  with tf.name_scope('accuracy'):
 #    correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
 #    correct_prediction = tf.cast(correct_prediction, tf.float32)
@@ -204,26 +210,39 @@ def main(_):
   with tf.name_scope('accuracy'):
      accuracy = cross_corr(y_conv, y_, batch_size, data_params)
 
-#  graph_location = tempfile.mkdtemp()
-#  print('Saving graph to: %s' % graph_location)
-#  train_writer = tf.summary.FileWriter(graph_location)
-#  train_writer.add_graph(tf.get_default_graph())
+  # Save Graph and Checkpoints
+  file_path = os.path.dirname(os.path.abspath(__file__))
+  graph_location = file_path + '\\graphs\\graph_im64_f8_s2\\'
+  ckpt_location = file_path + '\\checkpoints\\ckpt_im64_f8_s2\\'
+  if not os.path.exists(ckpt_location):
+    os.makedirs(ckpt_location)
+  saver = tf.train.Saver()
+  #  train_writer.add_graph(tf.get_default_graph())
+
+  # Obtain Summaries
+  tf.summary.scalar("loss", cost)
+  summary_op = tf.summary.merge_all() # Needed for many summaries  
 
   with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
-    for i in range(20):
-      print(i)
+    ckpt = tf.train.get_checkpoint_state(os.path.dirname(ckpt_location + 'checkpoint'))
+    if ckpt and ckpt.model_checkpoint_path:
+        saver.restore(sess, ckpt.model_checkpoint_path)
+    print('Saving graph to: %s' % graph_location)
+    train_writer = tf.summary.FileWriter(graph_location)    
+    
+    for i in range(30):
       batch = dataObj.train.next_batch(batch_size)
-      train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
-      print('step %d, training accuracy %g' % (i, train_accuracy))
-      if i % 100 == 0: 
+      #train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
+      if i % 10 == 0: 
         train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
         print('step %d, training accuracy %g' % (i, train_accuracy))
+        saver.save(sess, ckpt_location + 'im64_f8_s2', global_step=i)
+        loss_batch, _, summary = sess.run([cost, train_step, summary_op])
+        train_writer.add_summary(summary, global_step=i)
        
       train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
 
-    print("test features.shape are:"+str(dataObj.test.features.shape))
-    print("test labels.shape are:"+str(dataObj.test.labels.shape))
     print('test accuracy %g' % accuracy.eval(feed_dict={
         x: dataObj.test.features, y_: dataObj.test.labels, keep_prob: 1.0}))
 
