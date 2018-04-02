@@ -154,10 +154,11 @@ def read_data_sets(path, start_idx, end_idx):
   dataObj.test = test
   return dataObj, imgSize, numFrames, maxSources
 
-def load_dataset():
+def load_dataset(start_idx, num_samp):
   file_path = os.path.dirname(os.path.abspath(__file__))
   path = file_path + '\\..\\DataSimulation\\Dataset_im64_f8_s2\\'
-  start_idx = 1
-  end_idx = 50
+#  start_idx = 1
+#  end_idx = 50
+  end_idx = start_idx + num_samp
   return read_data_sets(path, start_idx, end_idx)
 

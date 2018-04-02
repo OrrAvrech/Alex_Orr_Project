@@ -44,9 +44,9 @@ def deepnn(x,data_params):
   # Reshape to use within a convolutional neural net.
   # Last dimension is for "features" - it would be 1 for grayscale
   # 3 for an RGB image, 4 for RGBA, numFrames for a movie.    
-  maxSources = data_params["maxSources"]
-  imgSize = data_params["imgSize"]
-  numFrames = data_params["numFrames"]
+  maxSources = data_params[2]
+  imgSize = data_params[0]
+  numFrames = data_params[1]
   with tf.name_scope('reshape_x'):
     if __debug__:
       print("reshape_x:")
@@ -152,8 +152,8 @@ def bias_variable(shape):
   return tf.Variable(initial)
 
 def cross_corr(logits, labels, batch_size, data_params):
-    maxSources = data_params["maxSources"]
-    imgSize = data_params["imgSize"]
+    maxSources = data_params[2]
+    imgSize = data_params[0]
     if __debug__:
       print("cross_corr:")
     for i in range(batch_size):  
@@ -175,8 +175,11 @@ def main(_):
     
   with tf.name_scope('data'):  
       # Import data
-      dataObj, imgSize, numFrames, maxSources = load_dataset()
-      data_params = {"imgSize":imgSize, "numFrames":numFrames, "maxSources":maxSources}
+      first_sample = 1
+      num_samp = 5
+      dataObj, imgSize, numFrames, maxSources = load_dataset(first_sample,num_samp)
+#      data_params = {"imgSize":imgSize, "numFrames":numFrames, "maxSources":maxSources}
+      data_params = [imgSize, numFrames, maxSources]
       print("loaded data")
       print("imgSize is:" +str(imgSize))
       print("numFrames is:" +str(numFrames))
@@ -213,36 +216,88 @@ def main(_):
   # Save Graph and Checkpoints
   file_path = os.path.dirname(os.path.abspath(__file__))
   graph_location = file_path + '\\graphs\\graph_im64_f8_s2\\'
-  ckpt_location = file_path + '\\checkpoints\\ckpt_im64_f8_s2\\'
-  if not os.path.exists(ckpt_location):
-    os.makedirs(ckpt_location)
-  saver = tf.train.Saver()
+#  ckpt_location = file_path + '\\checkpoints\\ckpt_im64_f8_s2\\'
+#  if not os.path.exists(ckpt_location):
+#    os.makedirs(ckpt_location)
+#  saver = tf.train.Saver()
   #  train_writer.add_graph(tf.get_default_graph())
 
   # Obtain Summaries
 #  tf.summary.scalar("loss", cost)
 #  summary_op = tf.summary.merge_all() # Needed for many summaries  
+  def get_tensor_dependencies(tensor):
+
+      # If a tensor is passed in, get its op
+      try:
+          tensor_op = tensor.op
+      except:
+          tensor_op = tensor
+  
+      # Recursively analyze inputs
+      dependencies = []
+      for inp in tensor_op.inputs:
+          new_d = get_tensor_dependencies(inp)
+          non_repeated = [d for d in new_d if d not in dependencies]
+          dependencies = [*dependencies, *non_repeated]
+  
+      # If we've reached the "end", return the op's name
+      if len(tensor_op.inputs) == 0:
+          dependencies = [tensor_op.name]
+  
+      # Return a list of tensor op names
+      return dependencies
+
 
   with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
-    ckpt = tf.train.get_checkpoint_state(os.path.dirname(ckpt_location + 'checkpoint'))
+#    ckpt = tf.train.get_checkpoint_state(os.path.dirname(ckpt_location + 'checkpoint'))
 #    if ckpt and ckpt.model_checkpoint_path:
 #        saver.restore(sess, ckpt.model_checkpoint_path)
     print('Saving graph to: %s' % graph_location)
 #    train_writer = tf.summary.FileWriter(graph_location)    
     
-    for i in range(30):
+    for i in range(num_samp):
       batch = dataObj.train.next_batch(batch_size)
       #train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
       if i % 10 == 0: 
         train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
         print('step %d, training accuracy %g' % (i, train_accuracy))
-        saver.save(sess, ckpt_location + 'im64_f8_s2', global_step=i)
+#        saver.save(sess, ckpt_location + 'im64_f8_s2', global_step=i)
 #        loss_batch, _, summary = sess.run([cost, train_step, summary_op])
 #        train_writer.add_summary(summary, global_step=i)
        
       train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
-#      print ('this is what i added:'+str(sess.run(batch[1])))
+      
+      
+###########     start test section:
+      if (i == 1):
+          print (x)
+          print (data_params)
+          # print(batch[0])
+#          dependencies = get_tensor_dependencies(y_conv)
+          for_print = sess.run(y_conv, feed_dict={
+                  x: batch[0],
+                  data_params: data_params
+                  })
+          print(for_print)
+#          print(size(dependencies))
+          #          for i in range(size(dependencies)):
+#          print(sess.run(dependencies[i]))
+            
+      
+#      for_print = sess.run(y_conv, feed_dict={
+#              x: batch[0] 
+#              imgSize: data_params["imgSize"],
+#              numFrames: data_params["numFrames"],
+#              maxSources: data_params["maxSources"]
+#              })
+#      print (y_conv.eval(feed_dict={x: batch[0],data_params: data_params}))
+#      print ('this is what i added:'+str(for_print))
+      
+      
+###########      end test section:
+      
+      
     print('test accuracy %g' % accuracy.eval(feed_dict={
         x: dataObj.test.features, y_: dataObj.test.labels, keep_prob: 1.0}))
 
