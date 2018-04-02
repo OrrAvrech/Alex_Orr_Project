@@ -1,0 +1,4 @@
+Start Time: 22-Mar-2018 14:29:07
+Creating 25000 samples, first file number is: 1000
+With 8 frames 
+Max number of sources is: 2
