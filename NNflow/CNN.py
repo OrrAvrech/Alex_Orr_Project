@@ -220,16 +220,16 @@ def main(_):
   #  train_writer.add_graph(tf.get_default_graph())
 
   # Obtain Summaries
-  tf.summary.scalar("loss", cost)
-  summary_op = tf.summary.merge_all() # Needed for many summaries  
+#  tf.summary.scalar("loss", cost)
+#  summary_op = tf.summary.merge_all() # Needed for many summaries  
 
   with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
     ckpt = tf.train.get_checkpoint_state(os.path.dirname(ckpt_location + 'checkpoint'))
-    if ckpt and ckpt.model_checkpoint_path:
-        saver.restore(sess, ckpt.model_checkpoint_path)
+#    if ckpt and ckpt.model_checkpoint_path:
+#        saver.restore(sess, ckpt.model_checkpoint_path)
     print('Saving graph to: %s' % graph_location)
-    train_writer = tf.summary.FileWriter(graph_location)    
+#    train_writer = tf.summary.FileWriter(graph_location)    
     
     for i in range(30):
       batch = dataObj.train.next_batch(batch_size)
@@ -238,11 +238,11 @@ def main(_):
         train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
         print('step %d, training accuracy %g' % (i, train_accuracy))
         saver.save(sess, ckpt_location + 'im64_f8_s2', global_step=i)
-        loss_batch, _, summary = sess.run([cost, train_step, summary_op])
-        train_writer.add_summary(summary, global_step=i)
+#        loss_batch, _, summary = sess.run([cost, train_step, summary_op])
+#        train_writer.add_summary(summary, global_step=i)
        
       train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
-
+#      print ('this is what i added:'+str(sess.run(batch[1])))
     print('test accuracy %g' % accuracy.eval(feed_dict={
         x: dataObj.test.features, y_: dataObj.test.labels, keep_prob: 1.0}))
 
