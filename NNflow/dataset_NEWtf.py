@@ -66,7 +66,7 @@ class DataSet(object):
     assert features.shape[0] == labels.shape[0], (
         'images.shape: %s labels.shape: %s' % (features.shape, labels.shape))
     self._num_examples = int(features.shape[0])
-    print ("_num examples is : "+str(features.shape[0]))
+#    print ("_num examples is : "+str(features.shape[0]))
     self._features = features
     self._labels = labels
     self._epochs_completed = 0

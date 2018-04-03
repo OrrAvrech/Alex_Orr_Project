@@ -18,6 +18,8 @@ import tempfile
 from dataset_NEWtf import load_dataset
 # Code for saving and restoring the model
 import SaveRestoreReset as srr
+# Manage checkpoints
+import Learning_log as llog
 
 import tensorflow as tf
 import os
@@ -163,71 +165,87 @@ def cross_corr(logits, labels, batch_size, data_params):
     return result/batch_size
 
 def main(_):
-    
-  with tf.name_scope('data'):  
-      # Import data
-      first_sample = 1
-      num_samp = 20
-      dataObj, imgSize, numFrames, maxSources = load_dataset(first_sample,num_samp)
-      data_params = [imgSize, numFrames, maxSources]
-      print("loaded data")
-      print("imgSize is:" +str(imgSize))
-      print("numFrames is:" +str(numFrames))
-      print("maxSources is:" +str(maxSources))
-      batch_size = 1
-
-  # Create the model
-  x = tf.placeholder(tf.float32, [None, imgSize, imgSize, numFrames])
-  y_ = tf.placeholder(tf.float32, [None, imgSize, imgSize, maxSources])
-
-  # Build the graph for the deep net
-  y_conv, keep_prob = deepnn(x,data_params)
-
-  # Define loss and optimizer
-  with tf.name_scope('loss'):
-    cost = tf.reduce_mean(tf.losses.mean_squared_error(y_,y_conv))
-
-  with tf.name_scope('adam_optimizer'):
-    lr = 1e-4
-    train_step = tf.train.AdamOptimizer(lr).minimize(cost)
-
-  with tf.name_scope('accuracy'):
-     accuracy = cross_corr(y_conv, y_, batch_size, data_params)
-
-  # Save Graph and Checkpoints
-  file_path = os.path.dirname(os.path.abspath(__file__))
-  graph_location = file_path + '\\graphs\\graph_im64_f8_s2\\'
-  ckpt_location = file_path + '\\checkpoints\\ckpt_im64_f8_s2\\'
-  if not os.path.exists(ckpt_location):
-    os.makedirs(ckpt_location)
-  restoreFlag = 0
-
-  with tf.Session() as sess:
-    sess.run(tf.global_variables_initializer())
-    if restoreFlag:
-        srr.restore(sess, ckpt_location, 'im64_f8_s2')
-    for i in range(num_samp):
-      batch = dataObj.train.next_batch(batch_size)
-      if i % 10 == 0: 
-        train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
-        print('step %d, training accuracy %g' % (i, train_accuracy))
-      train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
-     
-    srr.save(sess, ckpt_location, 'im64_f8_s2')
-    srr.saveGraph(graph_location)
+  try:
+      # Save Graph and Checkpoints
+      srr.reset()
+      file_path = os.path.dirname(os.path.abspath(__file__))
+      graph_location = file_path + '\\graphs\\graph_im64_f8_s2\\'
+      ckpt_location = file_path + '\\checkpoints\\ckpt_im64_f8_s2\\'
+      model_name = 'im64_f8_s2'
+      if not os.path.exists(ckpt_location):
+        os.makedirs(ckpt_location)
+      # Restore params  
+      restoreFlag = 1  
+      mode = 'last'
       
-###########     start test section:
-    for_print = sess.run(y_conv, feed_dict={x: batch[0], keep_prob: 0.5})
-    for_print= for_print[0, :, :, 1]
-    plt.figure(1)
-    plt.imshow(for_print)
-    y_img = batch[1][0, :, :, 1]
-    plt.figure(2)
-    plt.imshow(y_img)
-###########      end test section:
-
-    print('test accuracy %g' % accuracy.eval(feed_dict={
-        x: dataObj.test.features, y_: dataObj.test.labels, keep_prob: 1.0}))
+      # Manage checkpoints log
+      log_obj = llog.get_log(ckpt_location, model_name)
+      log_obj.write('\n' + ('#' * 50))
+      ckpt_start_time = llog.get_time()
+      log_obj.write("\ncheckpoint name: %s" % model_name + '_' + ckpt_start_time)
+      
+      with tf.name_scope('data'):  
+          # Import data
+          first_sample = 1
+          num_samp = 20
+          dataObj, imgSize, numFrames, maxSources = load_dataset(first_sample,num_samp)
+          data_params = [imgSize, numFrames, maxSources]
+          print("loaded data")
+          print("imgSize is:" +str(imgSize))
+          print("numFrames is:" +str(numFrames))
+          print("maxSources is:" +str(maxSources))
+          batch_size = 1
+    
+      # Create the model
+      x = tf.placeholder(tf.float32, [None, imgSize, imgSize, numFrames])
+      y_ = tf.placeholder(tf.float32, [None, imgSize, imgSize, maxSources])
+    
+      # Build the graph for the deep net
+      y_conv, keep_prob = deepnn(x,data_params)
+    
+      # Define loss and optimizer
+      with tf.name_scope('loss'):
+        cost = tf.reduce_mean(tf.losses.mean_squared_error(y_,y_conv))
+    
+      with tf.name_scope('adam_optimizer'):
+        lr = 1e-4
+        train_step = tf.train.AdamOptimizer(lr).minimize(cost)
+    
+      with tf.name_scope('accuracy'):
+         accuracy = cross_corr(y_conv, y_, batch_size, data_params)
+    
+      with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        if restoreFlag:
+            res_name = srr.restore(sess, ckpt_location, model_name, mode)
+            log_obj.write("\nrestored from: %s" % res_name)
+        for i in range(num_samp):
+          batch = dataObj.train.next_batch(batch_size)
+          if i % 10 == 0: 
+            train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
+            print('step %d, training accuracy %g' % (i, train_accuracy))
+          train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
+         
+        log_obj.write("\ntrain accuracy: %s" % accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0}))
+        log_obj.write("\nfinished: %s" % llog.get_time())
+        log_obj.close()
+        srr.save(sess, ckpt_location, model_name + '_' + ckpt_start_time)
+        srr.saveGraph(graph_location)
+          
+    ###########     start test section:
+        for_print = sess.run(y_conv, feed_dict={x: batch[0], keep_prob: 0.5})
+        for_print= for_print[0, :, :, 1]
+        plt.figure(1)
+        plt.imshow(for_print)
+        y_img = batch[1][0, :, :, 1]
+        plt.figure(2)
+        plt.imshow(y_img)
+    ###########      end test section:
+    
+        print('test accuracy %g' % accuracy.eval(feed_dict={
+                x: dataObj.test.features, y_: dataObj.test.labels, keep_prob: 1.0}))
+  except Exception:
+      log_obj.close()
 
 if __name__ == '__main__':
 #  parser = argparse.ArgumentParser()
@@ -239,3 +257,4 @@ if __name__ == '__main__':
   if __debug__:
     print("started")
   tf.app.run(main=main, argv=[sys.argv[0]])
+  
