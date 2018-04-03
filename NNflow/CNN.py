@@ -20,6 +20,8 @@ from dataset_NEWtf import load_dataset
 import SaveRestoreReset as srr
 # Manage checkpoints
 import Learning_log as llog
+# Import Summaries
+from Summaries import create_summaries 
 
 import tensorflow as tf
 import os
@@ -117,13 +119,11 @@ def deepnn(x,data_params):
     
   return y_conv, keep_prob
 
-
 def conv2d(x, W):
   """conv2d returns a 2d convolution layer with full stride."""
   if debug:
     print("conv2d:")
   return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
-
 
 def max_pool_2x2(x):
   """max_pool_2x2 downsamples a feature map by 2X."""
@@ -132,14 +132,12 @@ def max_pool_2x2(x):
   return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
                         strides=[1, 2, 2, 1], padding='SAME')
 
-
 def weight_variable(shape):
   """weight_variable generates a weight variable of a given shape."""
   if debug:
     print("weight_variable:")
   initial = tf.truncated_normal(shape, stddev=0.1)
   return tf.Variable(initial)
-
 
 def bias_variable(shape):
   """bias_variable generates a bias variable of a given shape."""
@@ -205,14 +203,21 @@ def main(_):
     
       # Define loss and optimizer
       with tf.name_scope('loss'):
-        cost = tf.reduce_mean(tf.losses.mean_squared_error(y_,y_conv))
+        loss = tf.reduce_mean(tf.losses.mean_squared_error(y_,y_conv))
     
       with tf.name_scope('adam_optimizer'):
         lr = 1e-4
-        train_step = tf.train.AdamOptimizer(lr).minimize(cost)
+        train_step = tf.train.AdamOptimizer(lr).minimize(loss)
     
       with tf.name_scope('accuracy'):
          accuracy = cross_corr(y_conv, y_, batch_size, data_params)
+         
+      with tf.name_scope("summaries"):
+            tf.summary.scalar("loss", loss)
+            tf.summary.scalar("accuracy", accuracy)            
+            # because you have several summaries, we should merge them all
+            # into one op to make it easier to manage
+            summary_op = tf.summary.merge_all()
     
       with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
@@ -224,7 +229,7 @@ def main(_):
           if i % 10 == 0: 
             train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
             print('step %d, training accuracy %g' % (i, train_accuracy))
-          train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
+          _, summary = sess.run([train_step, summary_op], feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
          
         log_obj.write("\ntrain accuracy: %s" % accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0}))
         log_obj.write("\nfinished: %s" % llog.get_time())
@@ -246,9 +251,6 @@ def main(_):
                 x: dataObj.test.features, y_: dataObj.test.labels, keep_prob: 1.0}))
   except Exception:
       log_obj.close()
-      
-  except SystemExit as e:
-    sys.exit(e)
 
 if __name__ == '__main__':
 #  parser = argparse.ArgumentParser()

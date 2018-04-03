@@ -6,7 +6,6 @@ Created on Tue Apr  3 12:30:44 2018
 """
 
 import datetime
-#import os
 
 def get_log(path_to_dir, model_name):
     log_file_name = path_to_dir + model_name + '.txt'
