@@ -6,7 +6,6 @@ Created on Sun Jan 14 01:05:30 2018
 """
 
 #%%
-import tensorflow as tf
 import numpy as np
 import h5py
 import os
@@ -21,14 +20,17 @@ def datasetFromMat(path, start_idx, end_idx, test_perc):
     for i in range(start_idx, end_idx):
         data_file = os.path.join(data_dir, str(i)+ '.mat')
         with h5py.File(data_file, 'r') as f:
-            sample_x = np.array(f.get('x'))
-            sample_y = np.array(f.get('y'))
+            sample_x = np.array(f.get('features'))
+            sample_y = np.array(f.get('labels'))
             
-#            sample_x = sample_x[1:4, 1:13, 1:13]            
-#            sample_y = sample_y[:, 1:13, 1:13]
+            sample_y = np.reshape(sample_y, (1,sample_y.shape[0],sample_y.shape[1],sample_y.shape[2]))            
+            sample_y = np.transpose(sample_y, (0, 2, 3, 1))
+            # sample_y : shape[2] is maxSources
             
-            sample_y = np.reshape(sample_y, (1,sample_y.shape[1],sample_y.shape[2],sample_y.shape[0]))
-            sample_x = np.reshape(sample_x, (1,sample_x.shape[1],sample_x.shape[2],sample_x.shape[0]))
+            sample_x = np.reshape(sample_x, (1,sample_x.shape[0],sample_x.shape[1],sample_x.shape[2]))
+            sample_x = np.transpose(sample_x, (0, 2, 3, 1))
+            # sample_y : shape[2] is numFrames            
+            
             if i == start_idx:
                 dataset_x = sample_x
                 dataset_y = sample_y
@@ -154,9 +156,11 @@ def read_data_sets(path, start_idx, end_idx):
   dataObj.test = test
   return dataObj, imgSize, numFrames, maxSources
 
-def load_dataset():
-  path = "P:\\Alex_Orr_Project\\DataSimulation\\final_Dataset_1\\"
-  start_idx = 1
-  end_idx = 50
+def load_dataset(start_idx, num_samp):
+  file_path = os.path.dirname(os.path.abspath(__file__))
+  path = file_path + '\\..\\DataSimulation\\Dataset_im64_f8_s2\\'
+#  start_idx = 1
+#  end_idx = 50
+  end_idx = start_idx + num_samp
   return read_data_sets(path, start_idx, end_idx)
 
