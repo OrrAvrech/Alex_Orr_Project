@@ -177,7 +177,7 @@ def main(_):
   with tf.name_scope('data'):  
       # Import data
       first_sample = 1
-      num_samp = 20
+      num_samp = 5000
       dataObj, imgSize, numFrames, maxSources = load_dataset(first_sample,num_samp)
 #      data_params = {"imgSize":imgSize, "numFrames":numFrames, "maxSources":maxSources}
       data_params = [imgSize, numFrames, maxSources]
@@ -260,7 +260,7 @@ def main(_):
     for i in range(num_samp):
       batch = dataObj.train.next_batch(batch_size)
       #train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
-      if i % 10 == 0: 
+      if i % 500 == 0: 
         train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
         print('step %d, training accuracy %g' % (i, train_accuracy))
 #        saver.save(sess, ckpt_location + 'im64_f8_s2', global_step=i)
