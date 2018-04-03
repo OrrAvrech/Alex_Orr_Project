@@ -14,8 +14,10 @@ import argparse
 import sys
 import tempfile
 
-#from tensorflow.examples.tutorials.mnist import input_data
+# from tensorflow.examples.tutorials.mnist import input_data
 from dataset_NEWtf import load_dataset
+# Code for saving and restoring the model
+import SaveRestoreReset as srr
 
 import tensorflow as tf
 import os
@@ -76,8 +78,6 @@ def deepnn(x,data_params):
       print("pool2:")
     h_pool2 = max_pool_2x2(h_conv2)
 
-  # Fully connected layer 1 -- after 2 round of downsampling, our 28x28 image
-  # is down to 7x7x64 feature maps -- maps this to 1024 features.
   # Fully connected layer 1 -- after 2 round of downsampling, our 100x100 image
   # is down to 25x25x64 feature maps -- maps this to 65536 features.
   fc1_length = 2048
@@ -200,21 +200,24 @@ def main(_):
   ckpt_location = file_path + '\\checkpoints\\ckpt_im64_f8_s2\\'
   if not os.path.exists(ckpt_location):
     os.makedirs(ckpt_location)
+  restoreFlag = 0
 
   with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
+    if restoreFlag:
+        srr.restore(sess, ckpt_location, 'im64_f8_s2')
     for i in range(num_samp):
       batch = dataObj.train.next_batch(batch_size)
       if i % 100 == 0: 
         train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
         print('step %d, training accuracy %g' % (i, train_accuracy))
       train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
+     
+    srr.save(sess, ckpt_location, 'im64_f8_s2')
+    srr.saveGraph(graph_location)
       
 ###########     start test section:
-    for_print = sess.run(y_conv, feed_dict={
-          x: batch[0], keep_prob: 0.5
-          })
-#          print(for_print)    
+    for_print = sess.run(y_conv, feed_dict={x: batch[0], keep_prob: 0.5})
     for_print= for_print[0, :, :, 1]
     plt.figure(1)
     plt.imshow(for_print)
