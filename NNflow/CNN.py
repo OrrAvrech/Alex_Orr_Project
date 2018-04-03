@@ -47,14 +47,14 @@ def deepnn(x,data_params):
   numFrames = data_params[1]
   imgSize = data_params[0]
   with tf.name_scope('reshape_x'):
-    if __debug__:
+    if debug:
       print("reshape_x:")
     x_image = tf.reshape(x, [-1, imgSize, imgSize, numFrames])
     # -1 is for the batch size, will be dynamically assigned 
 
   # First convolutional layer - maps one grayscale image to 32 feature maps.
   with tf.name_scope('conv1'):
-    if __debug__:
+    if debug:
       print("conv1:")
     W_conv1 = weight_variable([5, 5, numFrames, 16])
     b_conv1 = bias_variable([16])
@@ -62,29 +62,29 @@ def deepnn(x,data_params):
 
   # Pooling layer - downsamples by 2X.
   with tf.name_scope('pool1'):
-    if __debug__:
+    if debug:
       print("pool1:")
     h_pool1 = max_pool_2x2(h_conv1)
 
   # Second convolutional layer -- maps 32 feature maps to 64.
   with tf.name_scope('conv2'):
-    if __debug__:
+    if debug:
       print("conv2:")
-    W_conv2 = weight_variable([5, 5, 16, 16])
-    b_conv2 = bias_variable([16])
+    W_conv2 = weight_variable([5, 5, 16, 32])
+    b_conv2 = bias_variable([32])
     h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
 
   # Second pooling layer.
   with tf.name_scope('pool2'):
-    if __debug__:
+    if debug:
       print("pool2:")
     h_pool2 = max_pool_2x2(h_conv2)
 
   # Fully connected layer 1 -- after 2 round of downsampling, our 100x100 image
   # is down to 25x25x64 feature maps -- maps this to 65536 features.
-  fc1_length = 2048
+  fc1_length = 8192
   with tf.name_scope('fc1'):
-    if __debug__:
+    if debug:
       print("fc1:")
     W_fc1 = weight_variable([int(imgSize/4) * int(imgSize/4) * 16, fc1_length])
     b_fc1 = bias_variable([fc1_length])
@@ -95,14 +95,14 @@ def deepnn(x,data_params):
   # Dropout - controls the complexity of the model, prevents co-adaptation of
   # features.
   with tf.name_scope('dropout'):
-    if __debug__:
+    if debug:
       print("dropout:")
     keep_prob = tf.placeholder(tf.float32)
     h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
   # Map the 1024 features to 10 classes, one for each digit
   with tf.name_scope('fc2'):
-    if __debug__:
+    if debug:
       print("fc2:")
     W_fc2 = weight_variable([fc1_length, imgSize*imgSize*maxSources])
     b_fc2 = bias_variable([imgSize*imgSize*maxSources])
@@ -110,7 +110,7 @@ def deepnn(x,data_params):
     y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
     
   with tf.name_scope('reshape_y'):
-    if __debug__:
+    if debug:
       print("reshape_y:")
     y_conv = tf.reshape(y_conv, [-1, imgSize, imgSize, maxSources])
     # -1 is for the batch size, will be dynamically assigned 
@@ -120,14 +120,14 @@ def deepnn(x,data_params):
 
 def conv2d(x, W):
   """conv2d returns a 2d convolution layer with full stride."""
-  if __debug__:
+  if debug:
     print("conv2d:")
   return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
 
 
 def max_pool_2x2(x):
   """max_pool_2x2 downsamples a feature map by 2X."""
-  if __debug__:
+  if debug:
     print("max_pool_2x2:")
   return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
                         strides=[1, 2, 2, 1], padding='SAME')
@@ -135,7 +135,7 @@ def max_pool_2x2(x):
 
 def weight_variable(shape):
   """weight_variable generates a weight variable of a given shape."""
-  if __debug__:
+  if debug:
     print("weight_variable:")
   initial = tf.truncated_normal(shape, stddev=0.1)
   return tf.Variable(initial)
@@ -143,7 +143,7 @@ def weight_variable(shape):
 
 def bias_variable(shape):
   """bias_variable generates a bias variable of a given shape."""
-  if __debug__:
+  if debug:
     print("bias_variable:")
   initial = tf.constant(0.1, shape=shape)
   return tf.Variable(initial)
@@ -151,7 +151,7 @@ def bias_variable(shape):
 def cross_corr(logits, labels, batch_size, data_params):
     maxSources = data_params[2]
     imgSize = data_params[0]
-    if __debug__:
+    if debug:
       print("cross_corr:")
     for i in range(batch_size):  
         y_conv = logits[i, 0:imgSize, 0:imgSize, 0:maxSources]
@@ -169,9 +169,9 @@ def main(_):
       # Save Graph and Checkpoints
       srr.reset()
       file_path = os.path.dirname(os.path.abspath(__file__))
-      graph_location = file_path + '\\graphs\\graph_im64_f8_s2\\'
-      ckpt_location = file_path + '\\checkpoints\\ckpt_im64_f8_s2\\'
-      model_name = 'im64_f8_s2'
+      graph_location = file_path + '\\graphs\\graph_im64_f8_s4\\'
+      ckpt_location = file_path + '\\checkpoints\\ckpt_im64_f8_s4\\'
+      model_name = 'im64_f8_s4'
       if not os.path.exists(ckpt_location):
         os.makedirs(ckpt_location)
       # Restore params  
@@ -246,6 +246,9 @@ def main(_):
                 x: dataObj.test.features, y_: dataObj.test.labels, keep_prob: 1.0}))
   except Exception:
       log_obj.close()
+      
+  except SystemExit as e:
+    sys.exit(e)
 
 if __name__ == '__main__':
 #  parser = argparse.ArgumentParser()
@@ -254,7 +257,8 @@ if __name__ == '__main__':
 #                      help='Directory for storing input data')
 #  FLAGS, unparsed = parser.parse_known_args()
 #  tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
-  if __debug__:
+  debug= False
+  if debug:
     print("started")
   tf.app.run(main=main, argv=[sys.argv[0]])
   
