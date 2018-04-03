@@ -20,14 +20,9 @@ from dataset_NEWtf import load_dataset
 import tensorflow as tf
 import os
 import numpy as np
-from scipy import signal
+import matplotlib.pyplot as plt
 
 FLAGS = None
-
-# Constant Dimensions -- Global
-#imgSize = 12
-#numFrames = 3  
-#maxSources = 15
 
 def deepnn(x,data_params):
   """deepnn builds the graph for a deep net for classifying digits.
@@ -44,9 +39,9 @@ def deepnn(x,data_params):
   # Reshape to use within a convolutional neural net.
   # Last dimension is for "features" - it would be 1 for grayscale
   # 3 for an RGB image, 4 for RGBA, numFrames for a movie.    
-  maxSources = data_params["maxSources"]
-  imgSize = data_params["imgSize"]
-  numFrames = data_params["numFrames"]
+  maxSources = data_params[2]
+  numFrames = data_params[1]
+  imgSize = data_params[0]
   with tf.name_scope('reshape_x'):
     if __debug__:
       print("reshape_x:")
@@ -57,7 +52,7 @@ def deepnn(x,data_params):
   with tf.name_scope('conv1'):
     if __debug__:
       print("conv1:")
-    W_conv1 = weight_variable([5, 5, numFrames, 32])
+    W_conv1 = weight_variable([5, 5, numFrames, 16])
     b_conv1 = bias_variable([32])
     h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
 
@@ -71,7 +66,7 @@ def deepnn(x,data_params):
   with tf.name_scope('conv2'):
     if __debug__:
       print("conv2:")
-    W_conv2 = weight_variable([5, 5, 32, 64])
+    W_conv2 = weight_variable([5, 5, 16, 16])
     b_conv2 = bias_variable([64])
     h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
 
@@ -85,14 +80,14 @@ def deepnn(x,data_params):
   # is down to 7x7x64 feature maps -- maps this to 1024 features.
   # Fully connected layer 1 -- after 2 round of downsampling, our 100x100 image
   # is down to 25x25x64 feature maps -- maps this to 65536 features.
-  fc1_length = 4096
+  fc1_length = 2048
   with tf.name_scope('fc1'):
     if __debug__:
       print("fc1:")
-    W_fc1 = weight_variable([int(imgSize/4) * int(imgSize/4) * 64, fc1_length])
+    W_fc1 = weight_variable([int(imgSize/4) * int(imgSize/4) * 16, fc1_length])
     b_fc1 = bias_variable([fc1_length])
 
-    h_pool2_flat = tf.reshape(h_pool2, [-1, int(imgSize/4)*int(imgSize/4)*64])
+    h_pool2_flat = tf.reshape(h_pool2, [-1, int(imgSize/4)*int(imgSize/4)*16])
     h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
 
   # Dropout - controls the complexity of the model, prevents co-adaptation of
@@ -152,8 +147,8 @@ def bias_variable(shape):
   return tf.Variable(initial)
 
 def cross_corr(logits, labels, batch_size, data_params):
-    maxSources = data_params["maxSources"]
-    imgSize = data_params["imgSize"]
+    maxSources = data_params[2]
+    imgSize = data_params[0]
     if __debug__:
       print("cross_corr:")
     for i in range(batch_size):  
@@ -169,61 +164,59 @@ def cross_corr(logits, labels, batch_size, data_params):
 
 def main(_):
     
-  # Import data
-  dataObj, imgSize, numFrames, maxSources = load_dataset()
-  data_params = {"imgSize":imgSize, "numFrames":numFrames, "maxSources":maxSources}
-  print("loaded data")
-  print("imgSize is:" +str(imgSize))
-  print("numFrames is:" +str(numFrames))
-  print("maxSources is:" +str(maxSources))
-  batch_size = 1
+  with tf.name_scope('data'):  
+      # Import data
+      first_sample = 1
+      num_samp = 5000
+      dataObj, imgSize, numFrames, maxSources = load_dataset(first_sample,num_samp)
+      data_params = [imgSize, numFrames, maxSources]
+      print("loaded data")
+      print("imgSize is:" +str(imgSize))
+      print("numFrames is:" +str(numFrames))
+      print("maxSources is:" +str(maxSources))
+      batch_size = 1
 
   # Create the model
   x = tf.placeholder(tf.float32, [None, imgSize, imgSize, numFrames])
-
-  # Define loss and optimizer
   y_ = tf.placeholder(tf.float32, [None, imgSize, imgSize, maxSources])
 
   # Build the graph for the deep net
   y_conv, keep_prob = deepnn(x,data_params)
 
+  # Define loss and optimizer
   with tf.name_scope('loss'):
-#    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=y_,
-#                                                            logits=y_conv)
     cost = tf.reduce_mean(tf.losses.mean_squared_error(y_,y_conv))
-#    cost = tf.reduce_mean(-tf.reduce_sum(y_*tf.log(y_conv), reduction_indices=1))
-#  cross_entropy = tf.reduce_mean(cross_entropy)
 
   with tf.name_scope('adam_optimizer'):
-    train_step = tf.train.AdamOptimizer(1e-4).minimize(cost)
-#  with tf.name_scope('accuracy'):
-#    correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
-#    correct_prediction = tf.cast(correct_prediction, tf.float32)
-#  accuracy = tf.reduce_mean(correct_prediction)
-    
+    lr = 1e-4
+    train_step = tf.train.AdamOptimizer(lr).minimize(cost)
+
   with tf.name_scope('accuracy'):
      accuracy = cross_corr(y_conv, y_, batch_size, data_params)
 
-#  graph_location = tempfile.mkdtemp()
-#  print('Saving graph to: %s' % graph_location)
-#  train_writer = tf.summary.FileWriter(graph_location)
-#  train_writer.add_graph(tf.get_default_graph())
-
   with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
-    for i in range(20):
-      print(i)
+    for i in range(num_samp):
       batch = dataObj.train.next_batch(batch_size)
-      train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
-      print('step %d, training accuracy %g' % (i, train_accuracy))
       if i % 100 == 0: 
         train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
         print('step %d, training accuracy %g' % (i, train_accuracy))
-       
       train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
+      
+###########     start test section:
+    for_print = sess.run(y_conv, feed_dict={
+          x: batch[0], keep_prob: 0.5
+          })
+#          print(for_print)    
+    for_print= for_print[0, :, :, 1]
+    plt.figure(1)
+    plt.imshow(for_print)
+    y_img = batch[1][0, :, :, 1]
+    plt.figure(2)
+    plt.imshow(y_img)
 
-    print("test features.shape are:"+str(dataObj.test.features.shape))
-    print("test labels.shape are:"+str(dataObj.test.labels.shape))
+###########      end test section:
+
     print('test accuracy %g' % accuracy.eval(feed_dict={
         x: dataObj.test.features, y_: dataObj.test.labels, keep_prob: 1.0}))
 
