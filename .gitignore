@@ -7,5 +7,6 @@
 *.pdf
 *#
 __pycache__/
-DataSimulation/final_Dataset_1/log--06-Dec-2017--13-52-51.txt
-DataSimulation/final_Dataset_1/log--06-Dec-2017--13-49-57.txt
+graphs/
+checkpoints/
+

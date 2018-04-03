@@ -93,9 +93,7 @@ class DataSet(object):
     start = self._index_in_epoch
     # Shuffle for the first epoch
     if self._epochs_completed == 0 and start == 0 and shuffle:
-      print
       perm0 = np.arange(self._num_examples)
-      print("perm0 is:" + str(perm0))
       np.random.shuffle(perm0)
       self._features = self.features[perm0]
       self._labels = self.labels[perm0]
@@ -159,8 +157,6 @@ def read_data_sets(path, start_idx, end_idx):
 def load_dataset(start_idx, num_samp):
   file_path = os.path.dirname(os.path.abspath(__file__))
   path = file_path + '\\..\\DataSimulation\\Dataset_im64_f8_s2\\'
-#  start_idx = 1
-#  end_idx = 50
   end_idx = start_idx + num_samp
   return read_data_sets(path, start_idx, end_idx)
 

@@ -194,6 +194,13 @@ def main(_):
   with tf.name_scope('accuracy'):
      accuracy = cross_corr(y_conv, y_, batch_size, data_params)
 
+  # Save Graph and Checkpoints
+  file_path = os.path.dirname(os.path.abspath(__file__))
+  graph_location = file_path + '\\graphs\\graph_im64_f8_s2\\'
+  ckpt_location = file_path + '\\checkpoints\\ckpt_im64_f8_s2\\'
+  if not os.path.exists(ckpt_location):
+    os.makedirs(ckpt_location)
+
   with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
     for i in range(num_samp):
@@ -214,7 +221,6 @@ def main(_):
     y_img = batch[1][0, :, :, 1]
     plt.figure(2)
     plt.imshow(y_img)
-
 ###########      end test section:
 
     print('test accuracy %g' % accuracy.eval(feed_dict={
