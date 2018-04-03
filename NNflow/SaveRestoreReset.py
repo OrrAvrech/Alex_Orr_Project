@@ -32,10 +32,4 @@ def restore(sess, ckpt_location, checkpoint_file, mode):
     return res_name
     
 def reset():
-    tf.reset_default_graph()
-    
-def saveGraph(graph_location):
-    print('Saving graph to: %s' % graph_location)
-    train_writer = tf.summary.FileWriter(graph_location)    
-    train_writer.add_graph(tf.get_default_graph())
-    train_writer.close()    
+    tf.reset_default_graph()   

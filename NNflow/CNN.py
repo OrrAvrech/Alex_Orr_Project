@@ -20,8 +20,6 @@ from dataset_NEWtf import load_dataset
 import SaveRestoreReset as srr
 # Manage checkpoints
 import Learning_log as llog
-# Import Summaries
-from Summaries import create_summaries 
 
 import tensorflow as tf
 import os
@@ -212,30 +210,41 @@ def main(_):
       with tf.name_scope('accuracy'):
          accuracy = cross_corr(y_conv, y_, batch_size, data_params)
          
-      with tf.name_scope("summaries"):
-            tf.summary.scalar("loss", loss)
-            tf.summary.scalar("accuracy", accuracy)            
-            # because you have several summaries, we should merge them all
-            # into one op to make it easier to manage
-            summary_op = tf.summary.merge_all()
+      # Create Summaries
+      tf.summary.scalar("loss", loss)
+      tf.summary.scalar("accuracy", accuracy)            
+      # because you have several summaries, we should merge them all
+      # into one op to make it easier to manage
+      summary_op = tf.summary.merge_all()
     
       with tf.Session() as sess:
+          
         sess.run(tf.global_variables_initializer())
+
+        # Create writer objects
+        train_writer = tf.summary.FileWriter(graph_location, graph=tf.get_default_graph())            
+        
         if restoreFlag:
             res_name = srr.restore(sess, ckpt_location, model_name, mode)
             log_obj.write("\nrestored from: %s" % res_name)
+            
         for i in range(num_samp):
           batch = dataObj.train.next_batch(batch_size)
           if i % 10 == 0: 
             train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
             print('step %d, training accuracy %g' % (i, train_accuracy))
           _, summary = sess.run([train_step, summary_op], feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
+          train_writer.add_summary(summary, i)
          
         log_obj.write("\ntrain accuracy: %s" % accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0}))
         log_obj.write("\nfinished: %s" % llog.get_time())
         log_obj.close()
+        # Saving checkpoints
         srr.save(sess, ckpt_location, model_name + '_' + ckpt_start_time)
-        srr.saveGraph(graph_location)
+        # Saving graph
+        print('Saving graph to: %s' % graph_location)
+        train_writer.add_graph(tf.get_default_graph())
+        train_writer.close() 
           
     ###########     start test section:
         for_print = sess.run(y_conv, feed_dict={x: batch[0], keep_prob: 0.5})
