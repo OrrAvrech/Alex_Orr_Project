@@ -21,6 +21,7 @@ import tensorflow as tf
 import os
 import numpy as np
 from scipy import signal
+import matplotlib.pyplot as plt
 
 FLAGS = None
 
@@ -176,7 +177,7 @@ def main(_):
   with tf.name_scope('data'):  
       # Import data
       first_sample = 1
-      num_samp = 5
+      num_samp = 20
       dataObj, imgSize, numFrames, maxSources = load_dataset(first_sample,num_samp)
 #      data_params = {"imgSize":imgSize, "numFrames":numFrames, "maxSources":maxSources}
       data_params = [imgSize, numFrames, maxSources]
@@ -270,16 +271,22 @@ def main(_):
       
       
 ###########     start test section:
-      if (i == 1):
-          print (x)
-          print (data_params)
+      if (i == num_samp-1):
+#          print (x)
+#          print (data_params)
           # print(batch[0])
 #          dependencies = get_tensor_dependencies(y_conv)
+#          print(sess.run(dropout_1/Placeholder))
           for_print = sess.run(y_conv, feed_dict={
-                  x: batch[0],
-                  data_params: data_params
+                  x: batch[0], keep_prob: 0.5
                   })
-          print(for_print)
+#          print(for_print)    
+          for_print= for_print[0, :, :, 1]
+          plt.figure(1)
+          plt.imshow(for_print)
+          y_img = batch[1][0, :, :, 1]
+          plt.figure(2)
+          plt.imshow(y_img)
 #          print(size(dependencies))
           #          for i in range(size(dependencies)):
 #          print(sess.run(dependencies[i]))

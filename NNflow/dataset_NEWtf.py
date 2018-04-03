@@ -24,11 +24,14 @@ def datasetFromMat(path, start_idx, end_idx, test_perc):
             sample_x = np.array(f.get('features'))
             sample_y = np.array(f.get('labels'))
             
-#            sample_x = sample_x[1:4, 1:13, 1:13]            
-#            sample_y = sample_y[:, 1:13, 1:13]
+            sample_y = np.reshape(sample_y, (1,sample_y.shape[0],sample_y.shape[1],sample_y.shape[2]))
+            sample_y = np.transpose(sample_y, (0, 2, 3, 1))
+            # sample_y : shape[2] is maxSources
             
-            sample_y = np.reshape(sample_y, (1,sample_y.shape[1],sample_y.shape[2],sample_y.shape[0]))
-            sample_x = np.reshape(sample_x, (1,sample_x.shape[1],sample_x.shape[2],sample_x.shape[0]))
+            sample_x = np.reshape(sample_x, (1,sample_x.shape[0],sample_x.shape[1],sample_x.shape[2]))
+            sample_x = np.transpose(sample_x, (0, 2, 3, 1))
+            # sample_x : shape[2] is numFrames
+            
             if i == start_idx:
                 dataset_x = sample_x
                 dataset_y = sample_y
@@ -38,7 +41,7 @@ def datasetFromMat(path, start_idx, end_idx, test_perc):
     # Normalized features
     features = (dataset_x - np.mean(dataset_x))/np.std(dataset_x)
     labels = dataset_y
-    imgSize = features.shape[1]
+    imgSize = features.shape[2]
     numFrames = features.shape[3]
     maxSources = labels.shape[3]
     dataset_size = features.shape[0]

@@ -32,11 +32,11 @@ total_result = sum(error)/NumSources;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Random Emitters %%
 
-Emitters = load('..\DataSimulation\Dataset3\3.mat');
+Emitters = load('..\DataSimulation\Dataset_im64_f8_s2\3.mat');
 LinComb = Emitters.features;
 
 % Run FastICA
-MaxSources = 4;
+MaxSources = 2;
 IC = Tetrapod_ICA(MaxSources, LinComb); % IC is normalized (mean-std)
 
 % Visualize ICA Input and Output
