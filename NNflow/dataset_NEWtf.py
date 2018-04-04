@@ -11,14 +11,12 @@ import h5py
 import os
 
 def datasetFromMat(path, start_idx, end_idx, test_perc):
-
-    data_dir = os.path.dirname(path)
-    
+        
     dataset_x = []
     dataset_y = []
     
     for i in range(start_idx, end_idx):
-        data_file = os.path.join(data_dir, str(i)+ '.mat')
+        data_file = os.path.join(path, str(i)+ '.mat')
         with h5py.File(data_file, 'r') as f:
             sample_x = np.array(f.get('features'))
             sample_y = np.array(f.get('labels'))
@@ -156,7 +154,7 @@ def read_data_sets(path, start_idx, end_idx):
 
 def load_dataset(start_idx, num_samp):
   file_path = os.path.dirname(os.path.abspath(__file__))
-  path = file_path + '\\..\\DataSimulation\\Dataset_im64_f8_s4\\'
+  path = os.path.join(file_path,'..','DataSimulation','Dataset_im64_f8_s4')
   end_idx = start_idx + num_samp
   return read_data_sets(path, start_idx, end_idx)
 
