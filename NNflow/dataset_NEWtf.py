@@ -16,6 +16,9 @@ def datasetFromMat(path, start_idx, end_idx, test_perc):
     dataset_y = []
     
     for i in range(start_idx, end_idx):
+        if i % np.floor((end_idx-start_idx)/10) == 0: 
+            print ("loaded %d/%d samples" % (i-start_idx, (end_idx-start_idx)))
+            
         data_file = os.path.join(path, str(i)+ '.mat')
         with h5py.File(data_file, 'r') as f:
             sample_x = np.array(f.get('features'))

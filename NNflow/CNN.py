@@ -11,6 +11,7 @@ from __future__ import division
 from __future__ import print_function
 
 import sys
+import glob
 
 # from tensorflow.examples.tutorials.mnist import input_data
 from dataset_NEWtf import load_dataset
@@ -161,15 +162,15 @@ def main(_):
       # Save Graph and Checkpoints
       srr.reset()
       file_path = os.path.dirname(os.path.abspath(__file__))
-      graph_location = os.path.join(file_path,'graphs','graph_im64_f8_s4')
-      ckpt_location = os.path.join(file_path,'checkpoints','ckpt_im64_f8_s4')
-      model_name = 'im64_f8_s4'
-      restored_ckpt_name = 'im64_f8_s4_2018-04-04_1615' # for name mode in restore
+      model_name = 'im64_f8_s4'      
+      graph_location = os.path.join(file_path,'graphs','graph_'+model_name)
+      ckpt_location = os.path.join(file_path,'checkpoints','ckpt_'+model_name)
+      restored_ckpt_name = model_name+'_2018-04-04_1615' # for name mode in restore
       if not os.path.exists(ckpt_location):
         os.makedirs(ckpt_location)
       # Restore params  
       restoreFlag = 1  
-      mode = 'name' #last - take last checkpoint, name - get apecific checkpoint by name, best - take checkpoint with best accuracy so far (not supported yet)
+      mode = 'last' #last - take last checkpoint, name - get apecific checkpoint by name, best - take checkpoint with best accuracy so far (not supported yet)
       
       # Manage checkpoints log
       log_obj = srr.get_log(ckpt_location, model_name)
@@ -180,7 +181,8 @@ def main(_):
       with tf.name_scope('data'):  
           # Import data
           first_sample = 1
-          num_samp = 25
+          num_samp = 10
+          iter_num = num_samp
           dataObj, imgSize, numFrames, maxSources = load_dataset(first_sample,num_samp)
           data_params = [imgSize, numFrames, maxSources]
           print("loaded data with the following params:")
@@ -209,7 +211,7 @@ def main(_):
          
       # Create Summaries
       tf.summary.scalar("loss", loss)
-      tf.summary.scalar("accuracy", accuracy)            
+      tf.summary.scalar("accuracy", accuracy)
       # because you have several summaries, we should merge them all
       # into one op to make it easier to manage
       summary_op = tf.summary.merge_all()
@@ -220,16 +222,21 @@ def main(_):
 
         # Create writer objects
         print('Saving graph to: %s' % graph_location)
-        train_writer = tf.summary.FileWriter(graph_location, graph=tf.get_default_graph())            
+        files_before = glob.glob(os.path.join(graph_location,'*'))
+        train_writer = tf.summary.FileWriter(graph_location, graph=tf.get_default_graph())
+        new_file = set(files_before).symmetric_difference(set(glob.glob(os.path.join(graph_location,'*'))))
+        log_obj.write("\n"+"Graph file name: %s" % (''.join(new_file)))
         
         if restoreFlag:
             res_name = srr.restore(sess, ckpt_location, restored_ckpt_name, mode)
             log_obj.write("\nrestored from: %s" % res_name)
+            log_obj.write("\nsamples indices from: %d to %d, with total %d iterations" % (first_sample,first_sample+num_samp, iter_num))
             
-        for i in range(num_samp):
+            
+        for i in range(iter_num):
           batch = dataObj.train.next_batch(batch_size)
           _, summary = sess.run([train_step, summary_op], feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
-          if i % 5 == 0: 
+          if i % np.floor(num_samp/10) == 0: 
             train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
             print('step %d, training accuracy %g' % (i, train_accuracy))
             train_writer.add_summary(summary, i)          

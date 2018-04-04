@@ -46,3 +46,4 @@ def get_log(path_to_dir, model_name):
 def get_time():    
     time_stamp = '{date:%Y-%m-%d_%H%M}'.format( date=datetime.datetime.now())
     return time_stamp
+    
