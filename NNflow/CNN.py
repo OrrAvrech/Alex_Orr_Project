@@ -10,16 +10,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import argparse
 import sys
-import tempfile
 
 # from tensorflow.examples.tutorials.mnist import input_data
 from dataset_NEWtf import load_dataset
 # Code for saving and restoring the model
 import SaveRestoreReset as srr
-# Manage checkpoints
-import Learning_log as llog
 
 import tensorflow as tf
 import os
@@ -176,9 +172,9 @@ def main(_):
       mode = 'name' #last - take last checkpoint, name - get apecific checkpoint by name, best - take checkpoint with best accuracy so far (not supported yet)
       
       # Manage checkpoints log
-      log_obj = llog.get_log(ckpt_location, model_name)
+      log_obj = srr.get_log(ckpt_location, model_name)
       log_obj.write('\n' + ('#' * 50))
-      ckpt_start_time = llog.get_time()
+      ckpt_start_time = srr.get_time()
       log_obj.write("\ncheckpoint name: %s" % model_name + '_' + ckpt_start_time)
       
       with tf.name_scope('data'):  
@@ -239,7 +235,7 @@ def main(_):
             train_writer.add_summary(summary, i)          
          
         log_obj.write("\ntrain accuracy: %s" % accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0}))
-        log_obj.write("\nfinished: %s" % llog.get_time())
+        log_obj.write("\nfinished: %s" % srr.get_time())
         log_obj.close()
         # Saving checkpoints
         srr.save(sess, ckpt_location, model_name + '_' + ckpt_start_time)
@@ -264,12 +260,6 @@ def main(_):
       train_writer.close() 
 
 if __name__ == '__main__':
-#  parser = argparse.ArgumentParser()
-#  parser.add_argument('--data_dir', type=str,
-#                      default='/tmp/tensorflow/mnist/input_data',
-#                      help='Directory for storing input data')
-#  FLAGS, unparsed = parser.parse_known_args()
-#  tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
   debug= False
   if debug:
     print("started")

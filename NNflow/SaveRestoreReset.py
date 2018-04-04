@@ -7,6 +7,7 @@ Created on Mon Apr  2 16:46:36 2018
 
 import tensorflow as tf
 import os
+import datetime
 
 def save(sess, ckpt_location, checkpoint_file):
     saver = tf.train.Saver()
@@ -33,3 +34,15 @@ def restore(sess, ckpt_location, checkpoint_file, mode):
     
 def reset():
     tf.reset_default_graph()   
+
+def get_log(path_to_dir, model_name):
+    log_file_name = os.path.join(path_to_dir , model_name + '.txt')
+    log_obj = open(log_file_name, 'a')
+    print("create log: %s" % log_file_name)
+    return log_obj
+
+#def write_to(log_file):
+    
+def get_time():    
+    time_stamp = '{date:%Y-%m-%d_%H%M}'.format( date=datetime.datetime.now())
+    return time_stamp
