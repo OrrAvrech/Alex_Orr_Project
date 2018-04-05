@@ -24,6 +24,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 FLAGS = None
+def l1_loss(logits, gt):
+  valus_diff = tf.abs(tf.subtract(logits, gt))
+  L1_loss = tf.reduce_mean(valus_diff)
+  return L1_loss
+
 
 def deepnn(x,data_params):
   """deepnn builds the graph for a deep net for classifying digits.
@@ -94,7 +99,7 @@ def deepnn(x,data_params):
   with tf.name_scope('dropout'):
     if debug:
       print("dropout:")
-    keep_prob = tf.placeholder(tf.float32)
+    keep_prob = tf.placeholder(tf.float32, name = 'keep_prob')
     h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
   # Map the 1024 features to 10 classes, one for each digit
@@ -105,11 +110,12 @@ def deepnn(x,data_params):
     b_fc2 = bias_variable([imgSize*imgSize*maxSources])
 
     y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
+#    y_conv = tf.add(tf.matmul(h_fc1_drop, W_fc2), b_fc2, name="y_conv")
     
   with tf.name_scope('reshape_y'):
     if debug:
       print("reshape_y:")
-    y_conv = tf.reshape(y_conv, [-1, imgSize, imgSize, maxSources])
+    y_conv = tf.reshape(y_conv, [-1, imgSize, imgSize, maxSources], name="y_conv")
     # -1 is for the batch size, will be dynamically assigned 
     
   return y_conv, keep_prob
@@ -165,12 +171,12 @@ def main(_):
       model_name = 'im64_f8_s4'      
       graph_location = os.path.join(file_path,'graphs','graph_'+model_name)
       ckpt_location = os.path.join(file_path,'checkpoints','ckpt_'+model_name)
-      restored_ckpt_name = model_name+'_2018-04-04_1615' # for name mode in restore
+      restored_ckpt_name = model_name+'_2018-04-04_0000' # for name mode in restore
       if not os.path.exists(ckpt_location):
         os.makedirs(ckpt_location)
       # Restore params  
-      restoreFlag = 1  
-      mode = 'last' #last - take last checkpoint, name - get apecific checkpoint by name, best - take checkpoint with best accuracy so far (not supported yet)
+      restoreFlag = 0  
+      restore_mode = 'last' #last - take last checkpoint, name - get apecific checkpoint by name, best - take checkpoint with best accuracy so far (not supported yet)
       
       # Manage checkpoints log
       log_obj = srr.get_log(ckpt_location, model_name)
@@ -192,19 +198,23 @@ def main(_):
           batch_size = 1
     
       # Create the model
-      x = tf.placeholder(tf.float32, [None, imgSize, imgSize, numFrames])
-      y_ = tf.placeholder(tf.float32, [None, imgSize, imgSize, maxSources])
+      x = tf.placeholder(tf.float32, [None, imgSize, imgSize, numFrames], name = 'x')
+      y_ = tf.placeholder(tf.float32, [None, imgSize, imgSize, maxSources], name = 'y_')
+      global_step = tf.Variable(0, name='global_step', trainable=False)
     
       # Build the graph for the deep net
       y_conv, keep_prob = deepnn(x,data_params)
     
       # Define loss and optimizer
       with tf.name_scope('loss'):
-        loss = tf.reduce_mean(tf.losses.mean_squared_error(y_,y_conv))
+#        loss = tf.reduce_mean(tf.losses.mean_squared_error(y_,y_conv))
+        loss = l1_loss(y_,y_conv)
+        
+        
     
       with tf.name_scope('adam_optimizer'):
         lr = 1e-4
-        train_step = tf.train.AdamOptimizer(lr).minimize(loss)
+        train_step = tf.train.AdamOptimizer(lr).minimize(loss, global_step=global_step)
     
       with tf.name_scope('accuracy'):
          accuracy = cross_corr(y_conv, y_, batch_size, data_params)
@@ -212,6 +222,17 @@ def main(_):
       # Create Summaries
       tf.summary.scalar("loss", loss)
       tf.summary.scalar("accuracy", accuracy)
+      tf.summary.image('label1', tf.cast(tf.expand_dims(y_[:,:,:,0], axis=-1)*4,tf.uint8))
+      tf.summary.image('label2', tf.cast(tf.expand_dims(y_[:,:,:,1], axis=-1)*4,tf.uint8))
+      tf.summary.image('result1', tf.cast(tf.expand_dims(y_conv[:,:,:,0], axis=-1)*4,tf.uint8))
+      tf.summary.image('result2', tf.cast(tf.expand_dims(y_conv[:,:,:,1], axis=-1)*4,tf.uint8))
+      
+      
+      #tf.summary.image('label1', tf.cast(tf.slice(y_, [0, 0, 0, 0], [1, 64, 64, 1]), tf.uint8))
+      #tf.summary.image('label2', tf.cast(tf.slice(y_, [0, 0, 0, 1], [1, 64, 64, 2]), tf.uint8))
+      #tf.slice(logits[2], [0, 0, 0, 0], [FLAGS.batch, FLAGS.output_height, FLAGS.output_width, 1]
+      #tf.summary.image('result1', tf.cast(tf.slice(y_conv, [0, 0, 0, 0], [1, 64, 64, 1]), tf.uint8))
+      #tf.summary.image('result2', tf.cast(tf.slice(y_conv, [0, 0, 0, 1], [1, 64, 64, 2]), tf.uint8))
       # because you have several summaries, we should merge them all
       # into one op to make it easier to manage
       summary_op = tf.summary.merge_all()
@@ -228,21 +249,22 @@ def main(_):
         log_obj.write("\n"+"Graph file name: %s" % (''.join(new_file)))
         
         if restoreFlag:
-            res_name = srr.restore(sess, ckpt_location, restored_ckpt_name, mode)
-            log_obj.write("\nrestored from: %s" % res_name)
-            log_obj.write("\nsamples indices from: %d to %d, with total %d iterations" % (first_sample,first_sample+num_samp, iter_num))
+            res_name = srr.restore(sess, ckpt_location, restored_ckpt_name, restore_mode)
+            log_obj.write("\n"+"restored model name: %s" % res_name)
+            log_obj.write("\n"+"samples indices from: %d to %d, with total %d iterations" % (first_sample,first_sample+num_samp, iter_num))
             
-            
+        
         for i in range(iter_num):
+          if i == 0: print("started training") 
           batch = dataObj.train.next_batch(batch_size)
-          _, summary = sess.run([train_step, summary_op], feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
-          if i % np.floor(num_samp/10) == 0: 
+          _, summary = sess.run([train_step, summary_op], feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5}) #training step
+          if i % 10 == 0: #TODO: np.floor(iter_num/10) == 0: 
             train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
             print('step %d, training accuracy %g' % (i, train_accuracy))
-            train_writer.add_summary(summary, i)          
-         
-        log_obj.write("\ntrain accuracy: %s" % accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0}))
-        log_obj.write("\nfinished: %s" % srr.get_time())
+            train_writer.add_summary(summary, i)       
+        print('finished at global step %s' % sess.run(global_step))
+        log_obj.write("\n"+"train accuracy: %s" % accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0}))
+        log_obj.write("\n"+"finished: %s" % srr.get_time())
         log_obj.close()
         # Saving checkpoints
         srr.save(sess, ckpt_location, model_name + '_' + ckpt_start_time)
@@ -250,13 +272,18 @@ def main(_):
         train_writer.close() 
           
     ###########     start test section:
+        print({x: batch[0], keep_prob: 0.5})
+        print(y_conv)
         for_print = sess.run(y_conv, feed_dict={x: batch[0], keep_prob: 0.5})
-        for_print= for_print[0, :, :, 1]
-        plt.figure(1)
-        plt.imshow(for_print)
-        y_img = batch[1][0, :, :, 1]
-        plt.figure(2)
-        plt.imshow(y_img)
+        print(batch[1].shape)
+#        print (x.name)
+#        print (keep_prob.name)
+#        for_print= for_print[0, :, :, 1]
+#        plt.figure(1)
+#        plt.imshow(for_print)
+#        y_img = batch[1][0, :, :, 1]
+#        plt.figure(2)
+#        plt.imshow(y_img)
     ###########      end test section:
     
         print('test accuracy %g' % accuracy.eval(feed_dict={
