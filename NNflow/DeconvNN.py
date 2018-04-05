@@ -126,8 +126,48 @@ def deepnn(x,data_params):
     W_deconv1 = weight_variable([5, 5, 32, 64])
     b_deconv1 = bias_variable([32])
     h_deconv1 = tf.nn.relu(conv2d_transpose(x_image, W_deconv1) + b_deconv1) # need to add encoder output instead of x_image
+   
+  # Unpooling layer - upsamples by 2X to 16x16. 
+  with tf.name_scope('unpool1'): 
+    if debug:
+      print("unpool1:")
+    h_unpool1 = unpool_2d(h_deconv1)
     
-#   with tf.name_scope('unpool1'): # Unpooling layer - upsamples by 2X to 16x16.
+  # Second deconvolutional layer - maps 32 to 16 features.
+  with tf.name_scope('deconv2'):
+    if debug:
+      print("deconv2:")
+    W_deconv2 = weight_variable([5, 5, 16, 32])
+    b_deconv2 = bias_variable([16])
+    h_deconv2 = tf.nn.relu(conv2d_transpose(h_unpool1, W_deconv2) + b_deconv2) 
+   
+  # Unpooling layer - upsamples by 2X to 32x32. 
+  with tf.name_scope('unpool2'): 
+    if debug:
+      print("unpool2:")
+    h_unpool2 = unpool_2d(h_deconv2)
+    
+  # 3.1 deconvolutional layer - maps 16 to 8 features.
+  with tf.name_scope('deconv31'):
+    if debug:
+      print("deconv31:")
+    W_deconv31 = weight_variable([5, 5, 8, 16])
+    b_deconv31 = bias_variable([8])
+    h_deconv31 = tf.nn.relu(conv2d_transpose(h_unpool2, W_deconv31) + b_deconv31)
+
+  # 3.2 deconvolutional layer - maps 8 to 2 features.
+  with tf.name_scope('deconv32'):
+    if debug:
+      print("deconv32:")
+    W_deconv32 = weight_variable([5, 5, 2, 8])
+    b_deconv32 = bias_variable([2])
+    h_deconv32 = tf.nn.relu(conv2d_transpose(h_deconv31, W_deconv32) + b_deconv32)
+   
+  # Unpooling layer - upsamples by 2X to 64x64. 
+  with tf.name_scope('unpool3'): 
+    if debug:
+      print("unpool3:")
+    y_conv = unpool_2d(h_deconv32)
     
   with tf.name_scope('reshape_y'):
     if debug:
@@ -139,22 +179,55 @@ def deepnn(x,data_params):
 
 def conv2d(x, W):
   """conv2d returns a 2d convolution layer with full stride."""
-  if debug:
-    print("conv2d:")
+  # filter: A 4-D Tensor with the same type as value and shape [height, width, in_channels, out_channels]
   return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
 
 def conv2d_transpose(x, W):
   """conv2d_transpose returns a 2d deconvolution layer with full stride."""
-  if debug:
-    print("conv2d_transpose:")
+  # filter: A 4-D Tensor with the same type as value and shape [height, width, out_channels, in_channels]  
   return tf.nn.conv2d_transpose(x, W, strides=[1, 1, 1, 1], padding='SAME')
 
 def max_pool_2x2(x):
   """max_pool_2x2 downsamples a feature map by 2X."""
-  if debug:
-    print("max_pool_2x2:")
   return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
                         strides=[1, 2, 2, 1], padding='SAME')
+
+def unpool_2d(pool, 
+              ind, 
+              stride=[1, 2, 2, 1], 
+              scope='unpool_2d'):
+  """Adds a 2D unpooling op.
+  https://arxiv.org/abs/1505.04366
+  Unpooling layer after max_pool_with_argmax.
+       Args:
+           pool:        max pooled output tensor
+           ind:         argmax indices
+           stride:      stride is the same as for the pool
+       Return:
+           unpool:    unpooling tensor
+  """    
+  with tf.variable_scope(scope):
+    input_shape = tf.shape(pool)
+    output_shape = [input_shape[0], input_shape[1] * stride[1], input_shape[2] * stride[2], input_shape[3]]
+
+    flat_input_size = tf.reduce_prod(input_shape)
+    flat_output_shape = [output_shape[0], output_shape[1] * output_shape[2] * output_shape[3]]
+
+    pool_ = tf.reshape(pool, [flat_input_size])
+    batch_range = tf.reshape(tf.range(tf.cast(output_shape[0], tf.int64), dtype=ind.dtype), 
+                                      shape=[input_shape[0], 1, 1, 1])
+    b = tf.ones_like(ind) * batch_range
+    b1 = tf.reshape(b, [flat_input_size, 1])
+    ind_ = tf.reshape(ind, [flat_input_size, 1])
+    ind_ = tf.concat([b1, ind_], 1)
+
+    ret = tf.scatter_nd(ind_, pool_, shape=tf.cast(flat_output_shape, tf.int64))
+    ret = tf.reshape(ret, output_shape)
+
+    set_input_shape = pool.get_shape()
+    set_output_shape = [set_input_shape[0], set_input_shape[1] * stride[1], set_input_shape[2] * stride[2], set_input_shape[3]]
+    ret.set_shape(set_output_shape)
+    return ret
 
 def weight_variable(shape):
   """weight_variable generates a weight variable of a given shape."""
@@ -199,7 +272,7 @@ def main(_):
         os.makedirs(ckpt_location)
       # Restore params  
       restoreFlag = 1  
-      mode = 'name' #last - take last checkpoint, name - get apecific checkpoint by name, best - take checkpoint with best accuracy so far (not supported yet)
+      mode = 'last' #last - take last checkpoint, name - get apecific checkpoint by name, best - take checkpoint with best accuracy so far (not supported yet)
       
       # Manage checkpoints log
       log_obj = srr.get_log(ckpt_location, model_name)
