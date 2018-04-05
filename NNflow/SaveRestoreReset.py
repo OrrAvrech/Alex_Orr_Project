@@ -14,22 +14,26 @@ def save(sess, ckpt_location, checkpoint_file):
     save_path = saver.save(sess, os.path.join(ckpt_location,checkpoint_file))
     print('Model saved in path: %s' % save_path)
 
-def restore(sess, ckpt_location, checkpoint_file, mode):
-    saver = tf.train.Saver()
+def restore(sess, ckpt_location, checkpoint_file, mode ,saver = 'none'):
+    if saver == 'none':
+        saver = tf.train.Saver()
     ckpt = tf.train.get_checkpoint_state(os.path.dirname(os.path.join(ckpt_location , 'checkpoint')))
     if not ckpt:
         print("Nothing to restore from")
         return "None"
-    if mode == 'last':
+    elif mode == 'last':
         saver.restore(sess, tf.train.latest_checkpoint(ckpt_location))
         res_name = os.path.split(tf.train.latest_checkpoint(ckpt_location))[1]
-    if mode == 'name':    
+    elif mode == 'name':    
         if not os.path.exists(os.path.join(ckpt_location, checkpoint_file + '.meta')):
             print("Invalid checkpoint name")
             exit()
         saver.restore(sess, os.path.join(ckpt_location, checkpoint_file))
         res_name = checkpoint_file
-    print("Model %s restored" % res_name)
+        
+    else:
+        res_name = 'none'
+    print("restored model name: %s" % res_name)
     return res_name
     
 def reset():
