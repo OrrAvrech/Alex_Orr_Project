@@ -7,12 +7,12 @@ Created on Sun Apr  8 22:26:35 2018
 
 import tensorflow as tf
 
-def conv(x, kernel_shape, stride=[1,1,1,1], name):
+def conv(x, kernel_shape, name, stride=[1,1,1,1]):
   """conv returns a 2d convolution layer with ReLu activation.
       x: layer input
       kernel_shape: A 4-D Tensor with shape [height, width, in_channels, out_channels]    
   """  
-  bias_shape = [channels_shape[-1]]
+  bias_shape = [kernel_shape[-1]]
 
   W = weight_variable(kernel_shape) 
   b = bias_variable(bias_shape)
@@ -21,12 +21,12 @@ def conv(x, kernel_shape, stride=[1,1,1,1], name):
 
   return tf.nn.relu(conv + b)
 
-def deconv(x, kernel_shape, stride=[1,1,1,1], name, activation='ReLu'):
+def deconv(x, kernel_shape, name, stride=[1,1,1,1], activation='ReLu'):
   """deconv returns a 2d deconvolution layer with ReLu activation.
       x: layer input
       kernel_shape: A 4-D Tensor with shape [height, width, out_channels, in_channels]    
   """   
-  bias_shape = [channels_shape[0]]
+  bias_shape = [kernel_shape[-2]]
 
   W = weight_variable(kernel_shape) 
   b = bias_variable(bias_shape)
@@ -38,13 +38,13 @@ def deconv(x, kernel_shape, stride=[1,1,1,1], name, activation='ReLu'):
   
   return tf.nn.relu(conv_transpose + b)
 
-def max_pool(x, size, stride=[1, 2, 2, 1], padding='SAME', name):
+def max_pool(x, size, name, stride=[1, 2, 2, 1], padding='SAME'):
   """max_pool downsamples a feature map by taking the max value in a sizeXsize environment."""  
-  return tf.nn.max_pool(x, ksize=[1, size, size, 1], strides=stride, padding=padding, name)
+  return tf.nn.max_pool(x, ksize=[1, size, size, 1], strides=stride, padding=padding, name=name)
 
-def max_pool_argmax(x, size, stride=[1, 2, 2, 1], padding='SAME', name):
+def max_pool_argmax(x, size, name, stride=[1, 2, 2, 1], padding='SAME'):
   """max_pool and additionally outputs max values indices."""
-  return tf.nn.max_pool_with_argmax(x, ksize=[1, size, size, 1], strides=stride, padding=padding, name)
+  return tf.nn.max_pool_with_argmax(x, ksize=[1, size, size, 1], strides=stride, padding=padding, name=name)
 
 def unpool(x, size):
   """unpool upsamples a feature map."""  
@@ -63,8 +63,9 @@ def unpool(x, size):
 
 def unpool_argmax(pool, 
               ind, 
-              stride=[1, 2, 2, 1], 
-              scope):
+              scope,
+              stride=[1, 2, 2, 1]
+              ):
   """Adds a 2D unpooling op.
   https://arxiv.org/abs/1505.04366
   Unpooling layer after max_pool_with_argmax.
