@@ -6,34 +6,27 @@ Created on Mon Jan  1 09:56:11 2018
 """
 
 #%%
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
-import sys
-
-# from tensorflow.examples.tutorials.mnist import input_data
+# Load DataSet
 from dataset_NEWtf import load_dataset
 # Code for saving and restoring the model
 import SaveRestoreReset as srr
+# Layers for DeepNN Model
+import Layers as layers
 
+import sys
 import tensorflow as tf
 import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-FLAGS = None
 
 def deepnn(x,data_params):
-  """deepnn builds the graph for a deep net for classifying digits.
+  """deepnn builds the graph for a deep net for seperating emitters.
   Args:
-    x: an input tensor with the dimensions (N_examples, 784), where 784 is the
-    number of pixels in a standard MNIST image.
+    data_params: [imgSize, numFrames, maxSources]  
+    x: an input tensor of shape 64 x 64 x numFrames
   Returns:
-    A tuple (y, keep_prob). y is a tensor of shape (N_examples, 10), with values
-    equal to the logits of classifying the digit into one of 10 classes (the
-    digits 0-9). keep_prob is a scalar placeholder for the probability of
-    dropout.
+    y_conv is a tensor of shape 64 x 64 x maxSources 
   """
   
   # Reshape to use within a convolutional neural net.
@@ -43,65 +36,31 @@ def deepnn(x,data_params):
   numFrames = data_params[1]
   imgSize = data_params[0]
   with tf.name_scope('reshape_x'):
-    if debug:
-      print("reshape_x:")
     x_image = tf.reshape(x, [-1, imgSize, imgSize, numFrames])
     # -1 is for the batch size, will be dynamically assigned 
 
-  # First convolutional layer - maps numFrames to 16 features.
+  # First Convolutional Layer + maxPooling with argmax
   with tf.name_scope('conv1'):
-    if debug:
-      print("conv1:")
-    W_conv1 = weight_variable([5, 5, numFrames, 16])
-    b_conv1 = bias_variable([16])
-    h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
+    conv1_1 = layers.conv(x_image, [5, 5, numFrames, 32], 'conv1_1')  
+    conv1_2 = layers.conv(conv1_1, [5, 5, 32, 32], 'conv1_2')  
+    h_pool1, argmax1 = layers.max_pool_argmax(conv1_2, 2, 'pool1')
+    # Maps to 32x32x32 feature map
 
-  # Pooling layer - downsamples by 2X to 32x32.
-  with tf.name_scope('pool1'):
-    if debug:
-      print("pool1:")
-    h_pool1 = max_pool_2x2(h_conv1)
-
-  # Second convolutional layer -- maps 16 feature maps to 32.
+  # Second Convolutional Layer + maxPooling with argmax
   with tf.name_scope('conv2'):
-    if debug:
-      print("conv2:")
-    W_conv2 = weight_variable([5, 5, 16, 32])
-    b_conv2 = bias_variable([32])
-    h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
-
-  # Second pooling layer to 16x16.
-  with tf.name_scope('pool2'):
-    if debug:
-      print("pool2:")
-    h_pool2 = max_pool_2x2(h_conv2)
+    conv2_1 = layers.conv(h_pool1, [3, 3, 32, 64], 'conv2_1')  
+    conv2_2 = layers.conv(conv2_1, [3, 3, 64, 64], 'conv2_2')  
+    h_pool2, argmax2 = layers.max_pool_argmax(conv2_2, 2, 'pool2')
+    # Maps to 16x16x64 feature map
     
-  # Third convolutional layer -- maps 32 feature maps to 64.
+  # Third Convolutional Layer + maxPooling with argmax
   with tf.name_scope('conv3'):
-    if debug:
-      print("conv3:")
-    W_conv3 = weight_variable([5, 5, 32, 64])
-    b_conv3 = bias_variable([64])
-    h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
-
-  # Third pooling layer to 8x8.
-  with tf.name_scope('pool3'):
-    if debug:
-      print("pool3:")
-    h_pool3 = max_pool_2x2(h_conv3)
-
-#  # Fully connected layer 1 -- after 2 round of downsampling, our 100x100 image
-#  # is down to 25x25x64 feature maps -- maps this to 65536 features.
-#  fc1_length = 8192
-#  with tf.name_scope('fc1'):
-#    if debug:
-#      print("fc1:")
-#    W_fc1 = weight_variable([int(imgSize/4) * int(imgSize/4) * 16, fc1_length])
-#    b_fc1 = bias_variable([fc1_length])
-#
-#    h_pool2_flat = tf.reshape(h_pool2, [-1, int(imgSize/4)*int(imgSize/4)*16])
-#    h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
-#
+    conv3_1 = layers.conv(h_pool2, [3, 3, 64, 128], 'conv3_1')  
+    conv3_2 = layers.conv(conv3_1, [3, 3, 128, 128], 'conv3_2')  
+    conv3_3 = layers.conv(conv3_2, [3, 3, 128, 128], 'conv3_3')  
+    h_pool3, argmax3 = layers.max_pool_argmax(conv3_3, 2, 'pool3')
+    # Maps to 8x8x128 feature map
+    
 #  # Dropout - controls the complexity of the model, prevents co-adaptation of
 #  # features.
 #  with tf.name_scope('dropout'):
@@ -109,139 +68,34 @@ def deepnn(x,data_params):
 #      print("dropout:")
 #    keep_prob = tf.placeholder(tf.float32)
 #    h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
-#
-#  # Map the 1024 features to 10 classes, one for each digit
-#  with tf.name_scope('fc2'):
-#    if debug:
-#      print("fc2:")
-#    W_fc2 = weight_variable([fc1_length, imgSize*imgSize*maxSources])
-#    b_fc2 = bias_variable([imgSize*imgSize*maxSources])
-#
-#    y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
 
-  # First deconvolutional layer - maps 64 to 32 features.
+  # First Deconvolutional Layer + Unpooling with argmax
   with tf.name_scope('deconv1'):
-    if debug:
-      print("deconv1:")
-    W_deconv1 = weight_variable([5, 5, 32, 64])
-    b_deconv1 = bias_variable([32])
-    h_deconv1 = tf.nn.relu(conv2d_transpose(x_image, W_deconv1) + b_deconv1) # need to add encoder output instead of x_image
-   
-  # Unpooling layer - upsamples by 2X to 16x16. 
-  with tf.name_scope('unpool1'): 
-    if debug:
-      print("unpool1:")
-    h_unpool1 = unpool_2d(h_deconv1)
-    
-  # Second deconvolutional layer - maps 32 to 16 features.
+    h_unpool1 = layers.unpool_argmax(h_pool3, argmax3, 'unpool1')  
+    deconv1_1 = layers.deconv(h_unpool1, [3, 3, 128, 128], 'deconv1_1')
+    deconv1_2 = layers.deconv(deconv1_1, [3, 3, 128, 128], 'deconv1_2')
+    deconv1_3 = layers.deconv(deconv1_2, [3, 3, 64, 128], 'deconv1_3')
+    # Maps to 16x16x64
+          
+  # Second Deconvolutional Layer + Unpooling with argmax
   with tf.name_scope('deconv2'):
-    if debug:
-      print("deconv2:")
-    W_deconv2 = weight_variable([5, 5, 16, 32])
-    b_deconv2 = bias_variable([16])
-    h_deconv2 = tf.nn.relu(conv2d_transpose(h_unpool1, W_deconv2) + b_deconv2) 
-   
-  # Unpooling layer - upsamples by 2X to 32x32. 
-  with tf.name_scope('unpool2'): 
-    if debug:
-      print("unpool2:")
-    h_unpool2 = unpool_2d(h_deconv2)
+    h_unpool2 = layers.unpool_argmax(deconv1_3, argmax2, 'unpool2')  
+    deconv2_1 = layers.deconv(h_unpool2, [3, 3, 64, 64], 'deconv2_1')
+    deconv2_2 = layers.deconv(deconv2_1, [3, 3, 32, 64], 'deconv2_2')
+    # Maps to 32x32x32
     
-  # 3.1 deconvolutional layer - maps 16 to 8 features.
-  with tf.name_scope('deconv31'):
-    if debug:
-      print("deconv31:")
-    W_deconv31 = weight_variable([5, 5, 8, 16])
-    b_deconv31 = bias_variable([8])
-    h_deconv31 = tf.nn.relu(conv2d_transpose(h_unpool2, W_deconv31) + b_deconv31)
-
-  # 3.2 deconvolutional layer - maps 8 to 2 features.
-  with tf.name_scope('deconv32'):
-    if debug:
-      print("deconv32:")
-    W_deconv32 = weight_variable([5, 5, 2, 8])
-    b_deconv32 = bias_variable([2])
-    h_deconv32 = tf.nn.relu(conv2d_transpose(h_deconv31, W_deconv32) + b_deconv32)
-   
-  # Unpooling layer - upsamples by 2X to 64x64. 
-  with tf.name_scope('unpool3'): 
-    if debug:
-      print("unpool3:")
-    y_conv = unpool_2d(h_deconv32)
+  # Third Deconvolutional Layer + Unpooling with argmax
+  with tf.name_scope('deconv3'):
+    h_unpool3 = layers.unpool_argmax(deconv2_2, argmax1, 'unpool3')  
+    deconv3_1 = layers.deconv(h_unpool3, [3, 3, 32, 32], 'deconv3_1')
+    deconv3_2 = layers.deconv(deconv3_1, [3, 3, maxSources, 32], 'deconv3_2')
+    deconv3_3 = layers.deconv(deconv3_2, [3, 3, maxSources, 32], 'deconv3_3', 'linear')
     
   with tf.name_scope('reshape_y'):
-    if debug:
-      print("reshape_y:")
-    y_conv = tf.reshape(y_conv, [-1, imgSize, imgSize, maxSources])
+    y_conv = tf.reshape(deconv3_3, [-1, imgSize, imgSize, maxSources])
     # -1 is for the batch size, will be dynamically assigned 
     
-  return y_conv, keep_prob
-
-def conv2d(x, W):
-  """conv2d returns a 2d convolution layer with full stride."""
-  # filter: A 4-D Tensor with the same type as value and shape [height, width, in_channels, out_channels]
-  return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
-
-def conv2d_transpose(x, W):
-  """conv2d_transpose returns a 2d deconvolution layer with full stride."""
-  # filter: A 4-D Tensor with the same type as value and shape [height, width, out_channels, in_channels]  
-  return tf.nn.conv2d_transpose(x, W, strides=[1, 1, 1, 1], padding='SAME')
-
-def max_pool_2x2(x):
-  """max_pool_2x2 downsamples a feature map by 2X."""
-  return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
-                        strides=[1, 2, 2, 1], padding='SAME')
-
-def unpool_2d(pool, 
-              ind, 
-              stride=[1, 2, 2, 1], 
-              scope='unpool_2d'):
-  """Adds a 2D unpooling op.
-  https://arxiv.org/abs/1505.04366
-  Unpooling layer after max_pool_with_argmax.
-       Args:
-           pool:        max pooled output tensor
-           ind:         argmax indices
-           stride:      stride is the same as for the pool
-       Return:
-           unpool:    unpooling tensor
-  """    
-  with tf.variable_scope(scope):
-    input_shape = tf.shape(pool)
-    output_shape = [input_shape[0], input_shape[1] * stride[1], input_shape[2] * stride[2], input_shape[3]]
-
-    flat_input_size = tf.reduce_prod(input_shape)
-    flat_output_shape = [output_shape[0], output_shape[1] * output_shape[2] * output_shape[3]]
-
-    pool_ = tf.reshape(pool, [flat_input_size])
-    batch_range = tf.reshape(tf.range(tf.cast(output_shape[0], tf.int64), dtype=ind.dtype), 
-                                      shape=[input_shape[0], 1, 1, 1])
-    b = tf.ones_like(ind) * batch_range
-    b1 = tf.reshape(b, [flat_input_size, 1])
-    ind_ = tf.reshape(ind, [flat_input_size, 1])
-    ind_ = tf.concat([b1, ind_], 1)
-
-    ret = tf.scatter_nd(ind_, pool_, shape=tf.cast(flat_output_shape, tf.int64))
-    ret = tf.reshape(ret, output_shape)
-
-    set_input_shape = pool.get_shape()
-    set_output_shape = [set_input_shape[0], set_input_shape[1] * stride[1], set_input_shape[2] * stride[2], set_input_shape[3]]
-    ret.set_shape(set_output_shape)
-    return ret
-
-def weight_variable(shape):
-  """weight_variable generates a weight variable of a given shape."""
-  if debug:
-    print("weight_variable:")
-  initial = tf.truncated_normal(shape, stddev=0.1)
-  return tf.Variable(initial)
-
-def bias_variable(shape):
-  """bias_variable generates a bias variable of a given shape."""
-  if debug:
-    print("bias_variable:")
-  initial = tf.constant(0.1, shape=shape)
-  return tf.Variable(initial)
+  return y_conv
 
 def cross_corr(logits, labels, batch_size, data_params):
     maxSources = data_params[2]
@@ -297,7 +151,7 @@ def main(_):
       y_ = tf.placeholder(tf.float32, [None, imgSize, imgSize, maxSources])
     
       # Build the graph for the deep net
-      y_conv, keep_prob = deepnn(x,data_params)
+      y_conv = deepnn(x,data_params)
     
       # Define loss and optimizer
       with tf.name_scope('loss'):
@@ -331,13 +185,13 @@ def main(_):
             
         for i in range(num_samp):
           batch = dataObj.train.next_batch(batch_size)
-          _, summary = sess.run([train_step, summary_op], feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
+          _, summary = sess.run([train_step, summary_op], feed_dict={x: batch[0], y_: batch[1]})
           if i % 5 == 0: 
-            train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
+            train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1]})
             print('step %d, training accuracy %g' % (i, train_accuracy))
             train_writer.add_summary(summary, i)          
          
-        log_obj.write("\ntrain accuracy: %s" % accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0}))
+        log_obj.write("\ntrain accuracy: %s" % accuracy.eval(feed_dict={x: batch[0], y_: batch[1]}))
         log_obj.write("\nfinished: %s" % srr.get_time())
         log_obj.close()
         # Saving checkpoints
@@ -346,7 +200,7 @@ def main(_):
         train_writer.close() 
           
     ###########     start test section:
-        for_print = sess.run(y_conv, feed_dict={x: batch[0], keep_prob: 0.5})
+        for_print = sess.run(y_conv, feed_dict={x: batch[0]})
         for_print= for_print[0, :, :, 1]
         plt.figure(1)
         plt.imshow(for_print)
@@ -356,7 +210,7 @@ def main(_):
     ###########      end test section:
     
         print('test accuracy %g' % accuracy.eval(feed_dict={
-                x: dataObj.test.features, y_: dataObj.test.labels, keep_prob: 1.0}))
+                x: dataObj.test.features, y_: dataObj.test.labels}))
                 
   except Exception:
       log_obj.close()
