@@ -6,6 +6,7 @@ Created on Sun Apr  8 22:26:35 2018
 """
 
 import tensorflow as tf
+import numpy as np
 
 def conv(x, kernel_shape, name, stride=[1,1,1,1]):
   """conv returns a 2d convolution layer with ReLu activation.
@@ -26,13 +27,22 @@ def deconv(x, kernel_shape, name, stride=[1,1,1,1], activation='ReLu'):
       x: layer input
       kernel_shape: A 4-D Tensor with shape [height, width, out_channels, in_channels]    
   """   
+  input_shape = x.get_shape().as_list()
+  batch_size = input_shape[0]
+  height = input_shape[1]
+  width = input_shape[2]
+  
+  stride_val = stride[1]
+
   bias_shape = [kernel_shape[-2]]
+  channel_out = kernel_shape[-2]
 
   W = weight_variable(kernel_shape) 
   b = bias_variable(bias_shape)
   
-  conv_transpose = tf.nn.conv2d_transpose(x, W, strides=stride, padding='SAME')
-  
+  output_shape = [batch_size, height * stride_val, width * stride_val, channel_out]
+  conv_transpose = tf.nn.conv2d_transpose(x, W, output_shape=output_shape, strides=stride, padding='SAME')
+
   if activation == 'linear':
       return (conv_transpose + b)
   
