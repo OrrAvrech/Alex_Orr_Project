@@ -175,7 +175,7 @@ def main(_):
       if not os.path.exists(ckpt_location):
         os.makedirs(ckpt_location)
       # Restore params  
-      restoreFlag = 0  
+      restoreFlag = 1  
       restore_mode = 'last' #last - take last checkpoint, name - get apecific checkpoint by name, best - take checkpoint with best accuracy so far (not supported yet)
       
       # Manage checkpoints log
@@ -188,7 +188,8 @@ def main(_):
           # Import data
           first_sample = 1
           num_samp = 10
-          iter_num = num_samp
+          epochs = 1000 #1e3
+          iter_num = num_samp*epochs
           dataObj, imgSize, numFrames, maxSources = load_dataset(first_sample,num_samp)
           data_params = [imgSize, numFrames, maxSources]
           print("loaded data with the following params:")
@@ -213,7 +214,7 @@ def main(_):
         
     
       with tf.name_scope('adam_optimizer'):
-        lr = 1e-4
+        lr = 1e-3
         train_step = tf.train.AdamOptimizer(lr).minimize(loss, global_step=global_step)
     
       with tf.name_scope('accuracy'):
@@ -258,7 +259,7 @@ def main(_):
           if i == 0: print("started training") 
           batch = dataObj.train.next_batch(batch_size)
           _, summary = sess.run([train_step, summary_op], feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5}) #training step
-          if i % 10 == 0: #TODO: np.floor(iter_num/10) == 0: 
+          if i % np.floor(iter_num/10) == 0: 
             train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
             print('step %d, training accuracy %g' % (i, train_accuracy))
             train_writer.add_summary(summary, i)       
