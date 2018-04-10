@@ -132,118 +132,117 @@ def l1_loss(logits, gt):
   return L1_loss
 
 def main(_):
-#  try:
-      # Save Graph and Checkpoints
-      srr.reset()
-      file_path = os.path.dirname(os.path.abspath(__file__))
-      graph_location = os.path.join(file_path,'graphs','graph_im64_f8_s2')
-      ckpt_location = os.path.join(file_path,'checkpoints','ckpt_im64_f8_s2')
-      model_name = 'im64_f8_s2'
-      restored_ckpt_name = 'im64_f8_s4_2018-04-04_1615' # for name mode in restore
-      if not os.path.exists(ckpt_location):
-        os.makedirs(ckpt_location)
-      # Restore params  
-      restoreFlag = 0  
-      restore_mode = 'last' #last - take last checkpoint, name - get apecific checkpoint by name, best - take checkpoint with best accuracy so far (not supported yet)
-      
-      # Manage checkpoints log
-      log_obj = srr.get_log(ckpt_location, model_name)
-      log_obj.write('\n' + ('#' * 50))
-      ckpt_start_time = srr.get_time()
-      log_obj.write("\ncheckpoint name: %s" % model_name + '_' + ckpt_start_time)
-      
-      with tf.name_scope('data'):  
-          # Import data
-          first_sample = 1
-          num_samp = 10
-          iter_num = num_samp
-          dataObj, imgSize, numFrames, maxSources = load_dataset(first_sample,num_samp)
-          data_params = [imgSize, numFrames, maxSources]
-          print("loaded data with the following params:")
-          print("imgSize is:" +str(imgSize))
-          print("numFrames is:" +str(numFrames))
-          print("maxSources is:" +str(maxSources))
-          batch_size = 1
-    
-      # Create the model
-      x = tf.placeholder(tf.float32, [None, imgSize, imgSize, numFrames], name='x')
-      y_ = tf.placeholder(tf.float32, [None, imgSize, imgSize, maxSources], name='y_')
-      global_step = tf.Variable(0, name='global_step', trainable=False)
-    
-      # Build the graph for the deep net
-      y_conv = deepnn(x,data_params)
-    
-      # Define loss and optimizer
-      with tf.name_scope('loss'):
-#        loss = tf.reduce_mean(tf.losses.mean_squared_error(y_,y_conv))
-         loss = l1_loss(y_,y_conv) 
-    
-      with tf.name_scope('adam_optimizer'):
-        lr = 1e-3
-        train_step = tf.train.AdamOptimizer(lr).minimize(loss, global_step=global_step)
-    
-      with tf.name_scope('accuracy'):
-         accuracy = cross_corr(y_conv, y_, batch_size, data_params)
-         
-      # Create Summaries
-      tf.summary.scalar("loss", loss)
-      tf.summary.scalar("accuracy", accuracy)            
-      # because you have several summaries, we should merge them all
-      # into one op to make it easier to manage
-      summary_op = tf.summary.merge_all()
-    
-      with tf.Session() as sess:
-        print('Initialize global variables')
-        sess.run(tf.global_variables_initializer())
-        
-        # Create writer objects
-        print('Saving graph to: %s' % graph_location)
-        files_before = glob.glob(os.path.join(graph_location,'*'))
-        train_writer = tf.summary.FileWriter(graph_location, graph=tf.get_default_graph())
-        new_file = set(files_before).symmetric_difference(set(glob.glob(os.path.join(graph_location,'*'))))
-        log_obj.write("\n"+"Graph file name: %s" % (''.join(new_file)))
-        
-        if restoreFlag:
-            res_name = srr.restore(sess, ckpt_location, restored_ckpt_name, restore_mode)
-            log_obj.write("\n"+"restored model name: %s" % res_name)
-            log_obj.write("\n"+"samples indices from: %d to %d, with total %d iterations" % (first_sample,first_sample+num_samp, iter_num))
-                 
-        for i in range(iter_num):
-          if i == 0: print("started training") 
-          batch = dataObj.train.next_batch(batch_size)
-          _, summary = sess.run([train_step, summary_op], feed_dict={x: batch[0], y_: batch[1]}) #training step
-          if np.floor(iter_num/10) == 0: 
-            train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1]})
-            print('step %d, training accuracy %g' % (i, train_accuracy))
-            train_writer.add_summary(summary, i)       
-        print('finished at global step %s' % sess.run(global_step))
-        log_obj.write("\n"+"train accuracy: %s" % accuracy.eval(feed_dict={x: batch[0], y_: batch[1]}))
-        log_obj.write("\n"+"finished: %s" % srr.get_time())
-        log_obj.close()
-        # Saving checkpoints
-        srr.save(sess, ckpt_location, model_name + '_' + ckpt_start_time)
-        train_writer.close()
-          
-    ###########     start test section:
-        for_print = sess.run(y_conv, feed_dict={x: batch[0]})
-        for_print= for_print[0, :, :, 1]
-        plt.figure(1)
-        plt.imshow(for_print)
-        y_img = batch[1][0, :, :, 1]
-        plt.figure(2)
-        plt.imshow(y_img)
-    ###########      end test section:
-    
-        print('test accuracy %g' % accuracy.eval(feed_dict={
-                x: dataObj.test.features, y_: dataObj.test.labels}))
-#                
-#  except Exception:
-#      log_obj.close()
-##      train_writer.close() 
+  # Save Graph and Checkpoints
+  srr.reset()
+  file_path = os.path.dirname(os.path.abspath(__file__))
+  graph_location = os.path.join(file_path,'graphs','graph_im64_f8_s2')
+  ckpt_location = os.path.join(file_path,'checkpoints','ckpt_im64_f8_s2')
+  model_name = 'im64_f8_s2'
+  restored_ckpt_name = 'im64_f8_s4_2018-04-04_1615' # for name mode in restore
+  if not os.path.exists(ckpt_location):
+    os.makedirs(ckpt_location)
+  # Restore params  
+  restoreFlag = 0  
+  restore_mode = 'last' #last - take last checkpoint, name - get apecific checkpoint by name, best - take checkpoint with best accuracy so far (not supported yet)
+  
+  # Manage checkpoints log
+  log_obj = srr.get_log(ckpt_location, model_name)
+  log_obj.write('\n' + ('#' * 50))
+  ckpt_start_time = srr.get_time()
+  log_obj.write("\ncheckpoint name: %s" % model_name + '_' + ckpt_start_time)
+  
+  with tf.name_scope('data'):  
+      # Import data
+      first_sample = 1
+      num_samp = 10
+      iter_num = num_samp
+      dataObj, imgSize, numFrames, maxSources = load_dataset(first_sample,num_samp)
+      data_params = [imgSize, numFrames, maxSources]
+      print("loaded data with the following params:")
+      print("imgSize is:" +str(imgSize))
+      print("numFrames is:" +str(numFrames))
+      print("maxSources is:" +str(maxSources))
+      batch_size = 1
 
+  # Create the model
+  x = tf.placeholder(tf.float32, [None, imgSize, imgSize, numFrames], name='x')
+  y_ = tf.placeholder(tf.float32, [None, imgSize, imgSize, maxSources], name='y_')
+  global_step = tf.Variable(0, name='global_step', trainable=False)
+
+  # Build the graph for the deep net
+  y_conv = deepnn(x,data_params)
+
+  # Define loss and optimizer
+  with tf.name_scope('loss'):
+#        loss = tf.reduce_mean(tf.losses.mean_squared_error(y_,y_conv))
+     loss = l1_loss(y_,y_conv) 
+
+  with tf.name_scope('adam_optimizer'):
+    lr = 1e-3
+    train_step = tf.train.AdamOptimizer(lr).minimize(loss, global_step=global_step)
+
+  with tf.name_scope('accuracy'):
+     accuracy = cross_corr(y_conv, y_, batch_size, data_params)
+     
+  # Create Summaries
+  tf.summary.scalar("loss", loss)
+  tf.summary.scalar("accuracy", accuracy)            
+  # because you have several summaries, we should merge them all
+  # into one op to make it easier to manage
+  summary_op = tf.summary.merge_all()
+
+  with tf.Session() as sess:
+    print('Initialize global variables')
+    sess.run(tf.global_variables_initializer())
+    
+    # Create writer objects
+    print('Saving graph to: %s' % graph_location)
+    files_before = glob.glob(os.path.join(graph_location,'*'))
+    train_writer = tf.summary.FileWriter(graph_location, graph=tf.get_default_graph())
+    new_file = set(files_before).symmetric_difference(set(glob.glob(os.path.join(graph_location,'*'))))
+    log_obj.write("\n"+"Graph file name: %s" % (''.join(new_file)))
+    
+    if restoreFlag:
+        res_name = srr.restore(sess, ckpt_location, restored_ckpt_name, restore_mode)
+        log_obj.write("\n"+"restored model name: %s" % res_name)
+        log_obj.write("\n"+"samples indices from: %d to %d, with total %d iterations" % (first_sample,first_sample+num_samp, iter_num))
+             
+    for i in range(iter_num):
+      if i == 0: print("started training") 
+      batch = dataObj.train.next_batch(batch_size)
+      _, summary = sess.run([train_step, summary_op], feed_dict={x: batch[0], y_: batch[1]}) #training step
+      if np.floor(iter_num/10) == 0: 
+        train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1]})
+        print('step %d, training accuracy %g' % (i, train_accuracy))
+        train_writer.add_summary(summary, i)       
+    print('finished at global step %s' % sess.run(global_step))
+    log_obj.write("\n"+"train accuracy: %s" % accuracy.eval(feed_dict={x: batch[0], y_: batch[1]}))
+    log_obj.write("\n"+"finished: %s" % srr.get_time())
+    log_obj.close()
+    # Saving checkpoints
+    srr.save(sess, ckpt_location, model_name + '_' + ckpt_start_time)
+    train_writer.close()
+      
+###########     start test section:
+    for_print = sess.run(y_conv, feed_dict={x: batch[0]})
+    for_print= for_print[0, :, :, 1]
+    plt.figure(1)
+    plt.imshow(for_print)
+    y_img = batch[1][0, :, :, 1]
+    plt.figure(2)
+    plt.imshow(y_img)
+###########      end test section:
+
+    print('test accuracy %g' % accuracy.eval(feed_dict={
+            x: dataObj.test.features, y_: dataObj.test.labels}))
+ 
+ 
 if __name__ == '__main__':
   debug=True
   if debug:
-    print("started")
-  tf.app.run(main=main, argv=[sys.argv[0]])
+    print("start")
+  try:  
+      tf.app.run(main=main, argv=[sys.argv[0]])                
+  except SystemExit:
+      print("end")  
   
