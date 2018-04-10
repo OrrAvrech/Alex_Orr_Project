@@ -14,11 +14,8 @@ def conv(x, kernel_shape, name, stride=[1,1,1,1]):
   """  
   bias_shape = [kernel_shape[-1]]
 
-#  W = weight_variable(kernel_shape) 
-#  b = bias_variable(bias_shape)
-
-  W = tf.get_variable('%s_W' % name, kernel_shape, initializer=tf.truncated_normal_initializer(stddev=.1))
-  b = tf.get_variable('%s_b' % name, bias_shape, initializer=tf.constant_initializer(.1))
+  W = weight_variable(kernel_shape) 
+  b = bias_variable(bias_shape)
 
   conv = tf.nn.conv2d(x, W, strides=stride, padding='SAME')
 
@@ -34,11 +31,8 @@ def deconv(x, kernel_shape, name, stride=[1,1,1,1], activation='ReLu'):
   bias_shape = [kernel_shape[-2]]
   channel_out = kernel_shape[-2]
 
-#  W = weight_variable(kernel_shape) 
-#  b = bias_variable(bias_shape)
-  
-  W = tf.get_variable('%s_W' % name, kernel_shape, initializer=tf.truncated_normal_initializer(stddev=.1))
-  b = tf.get_variable('%s_b' % name, bias_shape, initializer=tf.constant_initializer(.1))
+  W = weight_variable(kernel_shape) 
+  b = bias_variable(bias_shape)
   
   dyn_input_shape = tf.shape(x)
   batch_size = dyn_input_shape[0]
@@ -63,8 +57,8 @@ def max_pool_argmax(x, size, name, stride=[1, 2, 2, 1], padding='SAME'):
 
 def unpool(x, size):
   """unpool upsamples a feature map."""  
-  out = tf.concat_v2([x, tf.zeros_like(x)], 3)
-  out = tf.concat_v2([out, tf.zeros_like(out)], 2)
+  out = tf.concat([x, tf.zeros_like(x)], 3)
+  out = tf.concat([out, tf.zeros_like(out)], 2)
 
   sh = x.get_shape().as_list()
   if None not in sh[1:]:
@@ -117,9 +111,9 @@ def unpool_argmax(pool,
 def weight_variable(shape):
   """weight_variable generates a weight variable of a given shape."""
   initial = tf.truncated_normal(shape, stddev=0.1)
-  return tf.get_variable(initial)
+  return tf.Variable(initial)
 
 def bias_variable(shape):
   """bias_variable generates a bias variable of a given shape."""
   initial = tf.constant(0.1, shape=shape)
-  return tf.get_variable(initial)
+  return tf.Variable(initial)

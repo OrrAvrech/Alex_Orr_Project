@@ -46,7 +46,7 @@ def deepnn(x,data_params):
         print("conv1:")  
     conv1_1 = layers.conv(x_image, [3, 3, numFrames, 32], 'conv1_1')  
     conv1_2 = layers.conv(conv1_1, [3, 3, 32, 32], 'conv1_2')  
-    h_pool1, argmax1 = layers.max_pool_argmax(conv1_2, 2, 'pool1')
+    h_pool1 = layers.max_pool(conv1_2, 2, 'pool1')
     # Maps to 32x32x32 feature map
 
   # Second Convolutional Layer + maxPooling with argmax
@@ -55,7 +55,7 @@ def deepnn(x,data_params):
         print("conv2:")   
     conv2_1 = layers.conv(h_pool1, [3, 3, 32, 64], 'conv2_1')  
     conv2_2 = layers.conv(conv2_1, [3, 3, 64, 64], 'conv2_2')  
-    h_pool2, argmax2 = layers.max_pool_argmax(conv2_2, 2, 'pool2')
+    h_pool2 = layers.max_pool(conv2_2, 2, 'pool2')
     # Maps to 16x16x64 feature map
     
   # Third Convolutional Layer + maxPooling with argmax
@@ -65,7 +65,7 @@ def deepnn(x,data_params):
     conv3_1 = layers.conv(h_pool2, [3, 3, 64, 128], 'conv3_1')  
     conv3_2 = layers.conv(conv3_1, [3, 3, 128, 128], 'conv3_2')  
     conv3_3 = layers.conv(conv3_2, [3, 3, 128, 128], 'conv3_3')  
-    h_pool3, argmax3 = layers.max_pool_argmax(conv3_3, 2, 'pool3')
+    h_pool3 = layers.max_pool(conv3_3, 2, 'pool3')
     # Maps to 8x8x128 feature map
     
 #  # Dropout - controls the complexity of the model, prevents co-adaptation of
@@ -80,7 +80,7 @@ def deepnn(x,data_params):
   with tf.name_scope('deconv1'):
     if debug:
         print("deconv1:")   
-    h_unpool1 = layers.unpool_argmax(h_pool3, argmax3, 'unpool1') 
+    h_unpool1 = layers.unpool(h_pool3, 2) 
     deconv1_1 = layers.deconv(h_unpool1, [3, 3, 128, 128], 'deconv1_1')
     deconv1_2 = layers.deconv(deconv1_1, [3, 3, 128, 128], 'deconv1_2')
     deconv1_3 = layers.deconv(deconv1_2, [3, 3, 64, 128], 'deconv1_3')
@@ -90,7 +90,7 @@ def deepnn(x,data_params):
   with tf.name_scope('deconv2'):
     if debug:
         print("deconv2:")   
-    h_unpool2 = layers.unpool_argmax(deconv1_3, argmax2, 'unpool2')  
+    h_unpool2 = layers.unpool(deconv1_3, 2)  
     deconv2_1 = layers.deconv(h_unpool2, [3, 3, 64, 64], 'deconv2_1')
     deconv2_2 = layers.deconv(deconv2_1, [3, 3, 32, 64], 'deconv2_2')
     # Maps to 32x32x32
@@ -99,7 +99,7 @@ def deepnn(x,data_params):
   with tf.name_scope('deconv3'):
     if debug:
         print("deconv3:")  
-    h_unpool3 = layers.unpool_argmax(deconv2_2, argmax1, 'unpool3')  
+    h_unpool3 = layers.unpool(deconv2_2, 2)  
     deconv3_1 = layers.deconv(h_unpool3, [3, 3, 32, 32], 'deconv3_1')
     deconv3_2 = layers.deconv(deconv3_1, [3, 3, 32, 32], 'deconv3_2')
     deconv3_3 = layers.deconv(deconv3_2, [3, 3, maxSources, 32], 'deconv3_3')
@@ -194,9 +194,8 @@ def main(_):
     
       with tf.Session() as sess:
         print('Initialize global variables')
-        
         sess.run(tf.global_variables_initializer())
-        print(1)
+        
         # Create writer objects
         print('Saving graph to: %s' % graph_location)
         files_before = glob.glob(os.path.join(graph_location,'*'))
@@ -208,14 +207,10 @@ def main(_):
             res_name = srr.restore(sess, ckpt_location, restored_ckpt_name, restore_mode)
             log_obj.write("\n"+"restored model name: %s" % res_name)
             log_obj.write("\n"+"samples indices from: %d to %d, with total %d iterations" % (first_sample,first_sample+num_samp, iter_num))
-            
-        
+                 
         for i in range(iter_num):
           if i == 0: print("started training") 
           batch = dataObj.train.next_batch(batch_size)
-#          x = sess.run(y_conv,feed_dict={x: batch[0]})
-#          print(1)
-#          print(x)
           _, summary = sess.run([train_step, summary_op], feed_dict={x: batch[0], y_: batch[1]}) #training step
           if np.floor(iter_num/10) == 0: 
             train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1]})
