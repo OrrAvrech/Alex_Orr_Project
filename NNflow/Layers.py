@@ -6,7 +6,6 @@ Created on Sun Apr  8 22:26:35 2018
 """
 
 import tensorflow as tf
-import numpy as np
 
 def conv(x, kernel_shape, name, stride=[1,1,1,1]):
   """conv returns a 2d convolution layer with ReLu activation.
@@ -15,8 +14,11 @@ def conv(x, kernel_shape, name, stride=[1,1,1,1]):
   """  
   bias_shape = [kernel_shape[-1]]
 
-  W = weight_variable(kernel_shape) 
-  b = bias_variable(bias_shape)
+#  W = weight_variable(kernel_shape) 
+#  b = bias_variable(bias_shape)
+
+  W = tf.get_variable('%s_W' % name, kernel_shape, initializer=tf.truncated_normal_initializer(stddev=.1))
+  b = tf.get_variable('%s_b' % name, bias_shape, initializer=tf.constant_initializer(.1))
 
   conv = tf.nn.conv2d(x, W, strides=stride, padding='SAME')
 
@@ -27,20 +29,23 @@ def deconv(x, kernel_shape, name, stride=[1,1,1,1], activation='ReLu'):
       x: layer input
       kernel_shape: A 4-D Tensor with shape [height, width, out_channels, in_channels]    
   """   
-  input_shape = x.get_shape().as_list()
-  batch_size = input_shape[0]
-  height = input_shape[1]
-  width = input_shape[2]
-  
   stride_val = stride[1]
 
   bias_shape = [kernel_shape[-2]]
   channel_out = kernel_shape[-2]
 
-  W = weight_variable(kernel_shape) 
-  b = bias_variable(bias_shape)
+#  W = weight_variable(kernel_shape) 
+#  b = bias_variable(bias_shape)
   
-  output_shape = [batch_size, height * stride_val, width * stride_val, channel_out]
+  W = tf.get_variable('%s_W' % name, kernel_shape, initializer=tf.truncated_normal_initializer(stddev=.1))
+  b = tf.get_variable('%s_b' % name, bias_shape, initializer=tf.constant_initializer(.1))
+  
+  dyn_input_shape = tf.shape(x)
+  batch_size = dyn_input_shape[0]
+  height = dyn_input_shape[1]
+  width = dyn_input_shape[2]
+  
+  output_shape = tf.stack([batch_size, height*stride_val, width*stride_val, channel_out])
   conv_transpose = tf.nn.conv2d_transpose(x, W, output_shape=output_shape, strides=stride, padding='SAME')
 
   if activation == 'linear':
@@ -112,9 +117,9 @@ def unpool_argmax(pool,
 def weight_variable(shape):
   """weight_variable generates a weight variable of a given shape."""
   initial = tf.truncated_normal(shape, stddev=0.1)
-  return tf.Variable(initial)
+  return tf.get_variable(initial)
 
 def bias_variable(shape):
   """bias_variable generates a bias variable of a given shape."""
   initial = tf.constant(0.1, shape=shape)
-  return tf.Variable(initial)
+  return tf.get_variable(initial)

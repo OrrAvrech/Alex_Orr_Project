@@ -81,7 +81,6 @@ def deepnn(x,data_params):
     if debug:
         print("deconv1:")   
     h_unpool1 = layers.unpool_argmax(h_pool3, argmax3, 'unpool1') 
-    print(h_unpool1.shape)
     deconv1_1 = layers.deconv(h_unpool1, [3, 3, 128, 128], 'deconv1_1')
     deconv1_2 = layers.deconv(deconv1_1, [3, 3, 128, 128], 'deconv1_2')
     deconv1_3 = layers.deconv(deconv1_2, [3, 3, 64, 128], 'deconv1_3')
@@ -102,8 +101,8 @@ def deepnn(x,data_params):
         print("deconv3:")  
     h_unpool3 = layers.unpool_argmax(deconv2_2, argmax1, 'unpool3')  
     deconv3_1 = layers.deconv(h_unpool3, [3, 3, 32, 32], 'deconv3_1')
-    deconv3_2 = layers.deconv(deconv3_1, [3, 3, maxSources, 32], 'deconv3_2')
-    deconv3_3 = layers.deconv(deconv3_2, [3, 3, maxSources, 32], 'deconv3_3', 'linear')
+    deconv3_2 = layers.deconv(deconv3_1, [3, 3, 32, 32], 'deconv3_2')
+    deconv3_3 = layers.deconv(deconv3_2, [3, 3, maxSources, 32], 'deconv3_3')
     
   with tf.name_scope('reshape_y'):
     y_conv = tf.reshape(deconv3_3, [-1, imgSize, imgSize, maxSources])
@@ -133,7 +132,7 @@ def l1_loss(logits, gt):
   return L1_loss
 
 def main(_):
-  try:
+#  try:
       # Save Graph and Checkpoints
       srr.reset()
       file_path = os.path.dirname(os.path.abspath(__file__))
@@ -194,9 +193,10 @@ def main(_):
       summary_op = tf.summary.merge_all()
     
       with tf.Session() as sess:
-          
-        sess.run(tf.global_variables_initializer())
+        print('Initialize global variables')
         
+        sess.run(tf.global_variables_initializer())
+        print(1)
         # Create writer objects
         print('Saving graph to: %s' % graph_location)
         files_before = glob.glob(os.path.join(graph_location,'*'))
@@ -213,6 +213,9 @@ def main(_):
         for i in range(iter_num):
           if i == 0: print("started training") 
           batch = dataObj.train.next_batch(batch_size)
+#          x = sess.run(y_conv,feed_dict={x: batch[0]})
+#          print(1)
+#          print(x)
           _, summary = sess.run([train_step, summary_op], feed_dict={x: batch[0], y_: batch[1]}) #training step
           if np.floor(iter_num/10) == 0: 
             train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1]})
@@ -238,10 +241,10 @@ def main(_):
     
         print('test accuracy %g' % accuracy.eval(feed_dict={
                 x: dataObj.test.features, y_: dataObj.test.labels}))
-                
-  except Exception:
-      log_obj.close()
-#      train_writer.close() 
+#                
+#  except Exception:
+#      log_obj.close()
+##      train_writer.close() 
 
 if __name__ == '__main__':
   debug=True
