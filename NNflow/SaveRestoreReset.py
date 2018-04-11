@@ -39,8 +39,8 @@ def restore(sess, ckpt_location, checkpoint_file, mode ,saver = 'none'):
 def reset():
     tf.reset_default_graph()   
 
-def get_log(path_to_dir, model_name):
-    log_file_name = os.path.join(path_to_dir , model_name + '.txt')
+def get_log(path_to_dir, model_arch_name):
+    log_file_name = os.path.join(path_to_dir , model_arch_name + '.txt')
     log_obj = open(log_file_name, 'a')
     print("create log: %s" % log_file_name)
     return log_obj

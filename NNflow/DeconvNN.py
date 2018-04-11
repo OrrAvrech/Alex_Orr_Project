@@ -138,6 +138,7 @@ def main(_):
   graph_location = os.path.join(file_path,'graphs','graph_im64_f8_s2')
   ckpt_location = os.path.join(file_path,'checkpoints','ckpt_im64_f8_s2')
   model_name = 'im64_f8_s2'
+  arch_name = 'CNN_deconv'
   restored_ckpt_name = 'im64_f8_s4_2018-04-04_1615' # for name mode in restore
   if not os.path.exists(ckpt_location):
     os.makedirs(ckpt_location)
@@ -146,7 +147,7 @@ def main(_):
   restore_mode = 'last' #last - take last checkpoint, name - get apecific checkpoint by name, best - take checkpoint with best accuracy so far (not supported yet)
   
   # Manage checkpoints log
-  log_obj = srr.get_log(ckpt_location, model_name)
+  log_obj = srr.get_log(ckpt_location, model_name+ '_' +arch_name)
   log_obj.write('\n' + ('#' * 50))
   ckpt_start_time = srr.get_time()
   log_obj.write("\ncheckpoint name: %s" % model_name + '_' + ckpt_start_time)
@@ -155,7 +156,7 @@ def main(_):
       # Import data
       first_sample = 1
       num_samp = 10
-      epochs = 100
+      epochs = 500
       iter_num = num_samp*epochs
       dataObj, imgSize, numFrames, maxSources = load_dataset(first_sample,num_samp)
       data_params = [imgSize, numFrames, maxSources]
@@ -206,7 +207,7 @@ def main(_):
     if restoreFlag:
         res_name = srr.restore(sess, ckpt_location, restored_ckpt_name, restore_mode)
         log_obj.write("\n"+"restored model name: %s" % res_name)
-        log_obj.write("\n"+"samples indices from: %d to %d, with total %d iterations" % (first_sample,first_sample+num_samp, iter_num))
+    log_obj.write("\n"+"samples indices from: %d to %d, with total %d iterations" % (first_sample,first_sample+num_samp, iter_num))
              
     for i in range(iter_num):
       if i == 0: print("started training") 

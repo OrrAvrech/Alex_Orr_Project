@@ -180,7 +180,7 @@ def main(_):
       restore_mode = 'last' #last - take last checkpoint, name - get apecific checkpoint by name, best - take checkpoint with best accuracy so far (not supported yet)
       
       # Manage checkpoints log
-      log_obj = srr.get_log(ckpt_location, model_name+arch_name)
+      log_obj = srr.get_log(ckpt_location, model_name+ '_' +arch_name)
       log_obj.write('\n' + ('#' * 50))
       ckpt_start_time = srr.get_time()
       log_obj.write("\ncheckpoint name: %s" % model_name + '_' + ckpt_start_time)
