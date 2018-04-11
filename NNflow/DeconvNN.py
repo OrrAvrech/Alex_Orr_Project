@@ -44,8 +44,8 @@ def deepnn(x,data_params):
   with tf.name_scope('conv1'):
     if debug:
         print("conv1:")  
-    conv1_1 = layers.conv(x_image, [3, 3, numFrames, 32], 'conv1_1')  
-    conv1_2 = layers.conv(conv1_1, [3, 3, 32, 32], 'conv1_2')  
+    conv1_1 = layers.conv(x_image, [3, 3, numFrames, 32])  
+    conv1_2 = layers.conv(conv1_1, [3, 3, 32, 32])  
     h_pool1 = layers.max_pool(conv1_2, 2, 'pool1')
     # Maps to 32x32x32 feature map
 
@@ -53,8 +53,8 @@ def deepnn(x,data_params):
   with tf.name_scope('conv2'):
     if debug:
         print("conv2:")   
-    conv2_1 = layers.conv(h_pool1, [3, 3, 32, 64], 'conv2_1')  
-    conv2_2 = layers.conv(conv2_1, [3, 3, 64, 64], 'conv2_2')  
+    conv2_1 = layers.conv(h_pool1, [3, 3, 32, 64])  
+    conv2_2 = layers.conv(conv2_1, [3, 3, 64, 64])  
     h_pool2 = layers.max_pool(conv2_2, 2, 'pool2')
     # Maps to 16x16x64 feature map
     
@@ -62,9 +62,9 @@ def deepnn(x,data_params):
   with tf.name_scope('conv3'):
     if debug:
         print("conv3:") 
-    conv3_1 = layers.conv(h_pool2, [3, 3, 64, 128], 'conv3_1')  
-    conv3_2 = layers.conv(conv3_1, [3, 3, 128, 128], 'conv3_2')  
-    conv3_3 = layers.conv(conv3_2, [3, 3, 128, 128], 'conv3_3')  
+    conv3_1 = layers.conv(h_pool2, [3, 3, 64, 128])  
+    conv3_2 = layers.conv(conv3_1, [3, 3, 128, 128])  
+    conv3_3 = layers.conv(conv3_2, [3, 3, 128, 128])  
     h_pool3 = layers.max_pool(conv3_3, 2, 'pool3')
     # Maps to 8x8x128 feature map
     
@@ -80,29 +80,29 @@ def deepnn(x,data_params):
   with tf.name_scope('deconv1'):
     if debug:
         print("deconv1:")   
-    h_unpool1 = layers.unpool(h_pool3, 2) 
-    deconv1_1 = layers.deconv(h_unpool1, [3, 3, 128, 128], 'deconv1_1')
-    deconv1_2 = layers.deconv(deconv1_1, [3, 3, 128, 128], 'deconv1_2')
-    deconv1_3 = layers.deconv(deconv1_2, [3, 3, 64, 128], 'deconv1_3')
+    h_unpool1 = layers.unpool(h_pool3, 2, 'unpool1') 
+    deconv1_1 = layers.deconv(h_unpool1, [3, 3, 128, 128])
+    deconv1_2 = layers.deconv(deconv1_1, [3, 3, 128, 128])
+    deconv1_3 = layers.deconv(deconv1_2, [3, 3, 64, 128])
     # Maps to 16x16x64
           
   # Second Deconvolutional Layer + Unpooling with argmax
   with tf.name_scope('deconv2'):
     if debug:
         print("deconv2:")   
-    h_unpool2 = layers.unpool(deconv1_3, 2)  
-    deconv2_1 = layers.deconv(h_unpool2, [3, 3, 64, 64], 'deconv2_1')
-    deconv2_2 = layers.deconv(deconv2_1, [3, 3, 32, 64], 'deconv2_2')
+    h_unpool2 = layers.unpool(deconv1_3, 2, 'unpool2')  
+    deconv2_1 = layers.deconv(h_unpool2, [3, 3, 64, 64])
+    deconv2_2 = layers.deconv(deconv2_1, [3, 3, 32, 64])
     # Maps to 32x32x32
     
   # Third Deconvolutional Layer + Unpooling with argmax
   with tf.name_scope('deconv3'):
     if debug:
         print("deconv3:")  
-    h_unpool3 = layers.unpool(deconv2_2, 2)  
-    deconv3_1 = layers.deconv(h_unpool3, [3, 3, 32, 32], 'deconv3_1')
-    deconv3_2 = layers.deconv(deconv3_1, [3, 3, 32, 32], 'deconv3_2')
-    deconv3_3 = layers.deconv(deconv3_2, [3, 3, maxSources, 32], 'deconv3_3')
+    h_unpool3 = layers.unpool(deconv2_2, 2, 'unpool3')  
+    deconv3_1 = layers.deconv(h_unpool3, [3, 3, 32, 32])
+    deconv3_2 = layers.deconv(deconv3_1, [3, 3, 32, 32])
+    deconv3_3 = layers.deconv(deconv3_2, [3, 3, maxSources, 32], activation='linear')
     
   with tf.name_scope('reshape_y'):
     y_conv = tf.reshape(deconv3_3, [-1, imgSize, imgSize, maxSources])

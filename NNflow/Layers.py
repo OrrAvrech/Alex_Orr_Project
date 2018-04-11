@@ -7,7 +7,7 @@ Created on Sun Apr  8 22:26:35 2018
 
 import tensorflow as tf
 
-def conv(x, kernel_shape, name, stride=[1,1,1,1]):
+def conv(x, kernel_shape, stride=[1,1,1,1]):
   """conv returns a 2d convolution layer with ReLu activation.
       x: layer input
       kernel_shape: A 4-D Tensor with shape [height, width, in_channels, out_channels]    
@@ -21,10 +21,11 @@ def conv(x, kernel_shape, name, stride=[1,1,1,1]):
 
   return tf.nn.relu(conv + b)
 
-def deconv(x, kernel_shape, name, stride=[1,1,1,1], activation='ReLu'):
+def deconv(x, kernel_shape, stride=[1,1,1,1], activation='ReLu'):
   """deconv returns a 2d deconvolution layer with ReLu activation.
       x: layer input
-      kernel_shape: A 4-D Tensor with shape [height, width, out_channels, in_channels]    
+      kernel_shape: A 4-D Tensor with shape [height, width, out_channels, in_channels]  
+      activation: linear for no activation
   """   
   stride_val = stride[1]
 
@@ -43,10 +44,31 @@ def deconv(x, kernel_shape, name, stride=[1,1,1,1], activation='ReLu'):
   conv_transpose = tf.nn.conv2d_transpose(x, W, output_shape=output_shape, strides=stride, padding='SAME')
 
   if activation == 'linear':
-      return (conv_transpose + b)
+      return tf.add(conv_transpose, b)
   
   return tf.nn.relu(conv_transpose + b)
 
+def fc(x, kernel_shape, activation='ReLu'):
+   """fc returns a fully connected layer with ReLu activation.
+      x: layer input
+      kernel_shape: A 2-D Tensor with shape [feature_map_size, layer_size]
+      activation: linear for no activation
+  """ 
+   bias_shape = [kernel_shape[-1]]
+   feature_map_size = kernel_shape[0]
+  
+   W = weight_variable(kernel_shape) 
+   b = bias_variable(bias_shape) 
+  
+   h_flat = tf.reshape(x, [-1, feature_map_size])
+   
+   if activation == 'linear':
+      h_fc = tf.matmul(h_flat, W) + b
+      return h_fc
+  
+   h_fc = tf.nn.relu(tf.matmul(h_flat, W) + b)   
+   return h_fc
+  
 def max_pool(x, size, name, stride=[1, 2, 2, 1], padding='SAME'):
   """max_pool downsamples a feature map by taking the max value in a sizeXsize environment."""  
   return tf.nn.max_pool(x, ksize=[1, size, size, 1], strides=stride, padding=padding, name=name)
@@ -55,20 +77,21 @@ def max_pool_argmax(x, size, name, stride=[1, 2, 2, 1], padding='SAME'):
   """max_pool and additionally outputs max values indices."""
   return tf.nn.max_pool_with_argmax(x, ksize=[1, size, size, 1], strides=stride, padding=padding, name=name)
 
-def unpool(x, size):
-  """unpool upsamples a feature map."""  
-  out = tf.concat([x, tf.zeros_like(x)], 3)
-  out = tf.concat([out, tf.zeros_like(out)], 2)
-
-  sh = x.get_shape().as_list()
-  if None not in sh[1:]:
-    out_size = [-1, sh[1] * size, sh[2] * size, sh[3]]
-    return tf.reshape(out, out_size)
-
-  shv = tf.shape(x)
-  ret = tf.reshape(out, tf.stack([-1, shv[1] * size, shv[2] * size, sh[3]]))
-  ret.set_shape([None, None, None, sh[3]])
-  return ret
+def unpool(x, size, scope):
+  """unpool upsamples a feature map.""" 
+  with tf.variable_scope(scope):
+      out = tf.concat([x, tf.zeros_like(x)], 3)
+      out = tf.concat([out, tf.zeros_like(out)], 2)
+    
+      sh = x.get_shape().as_list()
+      if None not in sh[1:]:
+        out_size = [-1, sh[1] * size, sh[2] * size, sh[3]]
+        return tf.reshape(out, out_size)
+    
+      shv = tf.shape(x)
+      ret = tf.reshape(out, tf.stack([-1, shv[1] * size, shv[2] * size, sh[3]]))
+      ret.set_shape([None, None, None, sh[3]])
+      return ret
 
 def unpool_argmax(pool, 
               ind, 
