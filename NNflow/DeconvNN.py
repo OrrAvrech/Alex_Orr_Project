@@ -155,8 +155,8 @@ def main(_):
   with tf.name_scope('data'):  
       # Import data
       first_sample = 1
-      num_samp = 10
-      epochs = 500
+      num_samp = 10#00
+      epochs = 10#00
       iter_num = num_samp*epochs
       dataObj, imgSize, numFrames, maxSources = load_dataset(first_sample,num_samp)
       data_params = [imgSize, numFrames, maxSources]
@@ -212,6 +212,7 @@ def main(_):
     for i in range(iter_num):
       if i == 0: print("started training") 
       batch = dataObj.train.next_batch(batch_size)
+      batch_test = dataObj.test.next_batch(batch_size)
       _, summary = sess.run([train_step, summary_op], feed_dict={x: batch[0], y_: batch[1]}) #training step
       if i % np.floor(iter_num/10) == 0: 
         train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1]})
@@ -233,6 +234,17 @@ def main(_):
     y_img = batch[1][0, :, :, 1]
     plt.figure(2)
     plt.imshow(y_img)
+    
+    for_print = sess.run(y_conv, feed_dict={x: batch_test[0]})
+    print(batch[1].shape)
+#        print (x.name)
+#        print (keep_prob.name)
+    for_print= for_print[0, :, :, 1]
+    plt.figure(3)
+    plt.imshow(for_print)
+    y_img = batch_test[1][0, :, :, 1]
+    plt.figure(4)
+    plt.imshow(y_img)        
 ###########      end test section:
 
     print('test accuracy %g' % accuracy.eval(feed_dict={
