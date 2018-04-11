@@ -155,7 +155,8 @@ def main(_):
       # Import data
       first_sample = 1
       num_samp = 10
-      iter_num = num_samp
+      epochs = 100
+      iter_num = num_samp*epochs
       dataObj, imgSize, numFrames, maxSources = load_dataset(first_sample,num_samp)
       data_params = [imgSize, numFrames, maxSources]
       print("loaded data with the following params:")
@@ -211,7 +212,7 @@ def main(_):
       if i == 0: print("started training") 
       batch = dataObj.train.next_batch(batch_size)
       _, summary = sess.run([train_step, summary_op], feed_dict={x: batch[0], y_: batch[1]}) #training step
-      if np.floor(iter_num/10) == 0: 
+      if i % np.floor(iter_num/10) == 0: 
         train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1]})
         print('step %d, training accuracy %g' % (i, train_accuracy))
         train_writer.add_summary(summary, i)       
