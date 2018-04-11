@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jan  1 09:56:11 2018
+Created on Thu Apr 12 00:04:29 2018
 
 @author: sorrav
 """
 
-#%%
 # Load DataSet
 from dataset_NEWtf import load_dataset
 # Code for saving and restoring the model
 import SaveRestoreReset as srr
-# Layers for DeepNN Model
-import Layers as layers
+# Import Models
+import Models as models
 
 import sys
 import glob
@@ -19,96 +18,6 @@ import tensorflow as tf
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-
-
-def deepnn(x,data_params):
-  """deepnn builds the graph for a deep net for seperating emitters.
-  Args:
-    data_params: [imgSize, numFrames, maxSources]  
-    x: an input tensor of shape 64 x 64 x numFrames
-  Returns:
-    y_conv is a tensor of shape 64 x 64 x maxSources 
-  """
-  
-  # Reshape to use within a convolutional neural net.
-  # Last dimension is for "features" - it would be 1 for grayscale
-  # 3 for an RGB image, 4 for RGBA, numFrames for a movie.    
-  maxSources = data_params[2]
-  numFrames = data_params[1]
-  imgSize = data_params[0]
-  with tf.name_scope('reshape_x'):  
-    x_image = tf.reshape(x, [-1, imgSize, imgSize, numFrames])
-    # -1 is for the batch size, will be dynamically assigned 
-
-  # First Convolutional Layer + maxPooling with argmax
-  with tf.name_scope('conv1'):
-    if debug:
-        print("conv1:")  
-    conv1_1 = layers.conv(x_image, [3, 3, numFrames, 32])  
-    conv1_2 = layers.conv(conv1_1, [3, 3, 32, 32])  
-    h_pool1 = layers.max_pool(conv1_2, 2, 'pool1')
-    # Maps to 32x32x32 feature map
-
-  # Second Convolutional Layer + maxPooling with argmax
-  with tf.name_scope('conv2'):
-    if debug:
-        print("conv2:")   
-    conv2_1 = layers.conv(h_pool1, [3, 3, 32, 64])  
-    conv2_2 = layers.conv(conv2_1, [3, 3, 64, 64])  
-    h_pool2 = layers.max_pool(conv2_2, 2, 'pool2')
-    # Maps to 16x16x64 feature map
-    
-  # Third Convolutional Layer + maxPooling with argmax
-  with tf.name_scope('conv3'):
-    if debug:
-        print("conv3:") 
-    conv3_1 = layers.conv(h_pool2, [3, 3, 64, 128])  
-    conv3_2 = layers.conv(conv3_1, [3, 3, 128, 128])  
-    conv3_3 = layers.conv(conv3_2, [3, 3, 128, 128])  
-    h_pool3 = layers.max_pool(conv3_3, 2, 'pool3')
-    # Maps to 8x8x128 feature map
-    
-#  # Dropout - controls the complexity of the model, prevents co-adaptation of
-#  # features.
-#  with tf.name_scope('dropout'):
-#    if debug:
-#      print("dropout:")
-#    keep_prob = tf.placeholder(tf.float32)
-#    h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
-
-  # First Deconvolutional Layer + Unpooling with argmax
-  with tf.name_scope('deconv1'):
-    if debug:
-        print("deconv1:")   
-    h_unpool1 = layers.unpool(h_pool3, 2, 'unpool1') 
-    deconv1_1 = layers.deconv(h_unpool1, [3, 3, 128, 128])
-    deconv1_2 = layers.deconv(deconv1_1, [3, 3, 128, 128])
-    deconv1_3 = layers.deconv(deconv1_2, [3, 3, 64, 128])
-    # Maps to 16x16x64
-          
-  # Second Deconvolutional Layer + Unpooling with argmax
-  with tf.name_scope('deconv2'):
-    if debug:
-        print("deconv2:")   
-    h_unpool2 = layers.unpool(deconv1_3, 2, 'unpool2')  
-    deconv2_1 = layers.deconv(h_unpool2, [3, 3, 64, 64])
-    deconv2_2 = layers.deconv(deconv2_1, [3, 3, 32, 64])
-    # Maps to 32x32x32
-    
-  # Third Deconvolutional Layer + Unpooling with argmax
-  with tf.name_scope('deconv3'):
-    if debug:
-        print("deconv3:")  
-    h_unpool3 = layers.unpool(deconv2_2, 2, 'unpool3')  
-    deconv3_1 = layers.deconv(h_unpool3, [3, 3, 32, 32])
-    deconv3_2 = layers.deconv(deconv3_1, [3, 3, 32, 32])
-    deconv3_3 = layers.deconv(deconv3_2, [3, 3, maxSources, 32], activation='linear')
-    
-  with tf.name_scope('reshape_y'):
-    y_conv = tf.reshape(deconv3_3, [-1, imgSize, imgSize, maxSources])
-    # -1 is for the batch size, will be dynamically assigned 
-    
-  return y_conv
 
 def cross_corr(logits, labels, batch_size, data_params):
     maxSources = data_params[2]
@@ -164,7 +73,7 @@ def main(_):
       print("imgSize is:" +str(imgSize))
       print("numFrames is:" +str(numFrames))
       print("maxSources is:" +str(maxSources))
-      batch_size = 2
+      batch_size = 1
 
   # Create the model
   x = tf.placeholder(tf.float32, [None, imgSize, imgSize, numFrames], name='x')
@@ -172,11 +81,10 @@ def main(_):
   global_step = tf.Variable(0, name='global_step', trainable=False)
 
   # Build the graph for the deep net
-  y_conv = deepnn(x,data_params)
+  y_conv = models.DeconvN(x,data_params)
 
   # Define loss and optimizer
   with tf.name_scope('loss'):
-#        loss = tf.reduce_mean(tf.losses.mean_squared_error(y_,y_conv))
      loss = l1_loss(y_,y_conv) 
 
   with tf.name_scope('adam_optimizer'):
@@ -186,13 +94,6 @@ def main(_):
   with tf.name_scope('accuracy'):
      accuracy = cross_corr(y_conv, y_, batch_size, data_params)
      
-  # Create Summaries
-  tf.summary.scalar("loss", loss)
-  tf.summary.scalar("accuracy", accuracy)            
-  # because you have several summaries, we should merge them all
-  # into one op to make it easier to manage
-  summary_op = tf.summary.merge_all()
-
   with tf.Session() as sess:
     print('Initialize global variables')
     sess.run(tf.global_variables_initializer())
@@ -259,4 +160,4 @@ if __name__ == '__main__':
       tf.app.run(main=main, argv=[sys.argv[0]])                
   except SystemExit:
       print("end")  
-  
+
