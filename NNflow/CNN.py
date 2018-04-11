@@ -168,10 +168,11 @@ def main(_):
       # Save Graph and Checkpoints
       srr.reset()
       file_path = os.path.dirname(os.path.abspath(__file__))
-      model_name = 'im64_f8_s4'      
+      model_name = 'im64_f8_s4'
+      arch_name = 'CNN_fc'      
       graph_location = os.path.join(file_path,'graphs','graph_'+model_name)
       ckpt_location = os.path.join(file_path,'checkpoints','ckpt_'+model_name)
-      restored_ckpt_name = model_name+'_2018-04-04_0000' # for name mode in restore
+      restored_ckpt_name = model_name+'_2018-04-10_1318' # for name mode in restore
       if not os.path.exists(ckpt_location):
         os.makedirs(ckpt_location)
       # Restore params  
@@ -179,7 +180,7 @@ def main(_):
       restore_mode = 'last' #last - take last checkpoint, name - get apecific checkpoint by name, best - take checkpoint with best accuracy so far (not supported yet)
       
       # Manage checkpoints log
-      log_obj = srr.get_log(ckpt_location, model_name)
+      log_obj = srr.get_log(ckpt_location, model_name+arch_name)
       log_obj.write('\n' + ('#' * 50))
       ckpt_start_time = srr.get_time()
       log_obj.write("\ncheckpoint name: %s" % model_name + '_' + ckpt_start_time)
@@ -187,8 +188,8 @@ def main(_):
       with tf.name_scope('data'):  
           # Import data
           first_sample = 1
-          num_samp = 10
-          epochs = 1000 #1e3
+          num_samp = 5000
+          epochs = 500 #1e3
           iter_num = num_samp*epochs
           dataObj, imgSize, numFrames, maxSources = load_dataset(first_sample,num_samp)
           data_params = [imgSize, numFrames, maxSources]
@@ -252,12 +253,13 @@ def main(_):
         if restoreFlag:
             res_name = srr.restore(sess, ckpt_location, restored_ckpt_name, restore_mode)
             log_obj.write("\n"+"restored model name: %s" % res_name)
-            log_obj.write("\n"+"samples indices from: %d to %d, with total %d iterations" % (first_sample,first_sample+num_samp, iter_num))
+        log_obj.write("\n"+"samples indices from: %d to %d, with total %d iterations" % (first_sample,first_sample+num_samp, iter_num))
             
         
         for i in range(iter_num):
           if i == 0: print("started training") 
           batch = dataObj.train.next_batch(batch_size)
+          batch_test = dataObj.test.next_batch(batch_size)
           _, summary = sess.run([train_step, summary_op], feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5}) #training step
           if i % np.floor(iter_num/10) == 0: 
             train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
@@ -273,18 +275,35 @@ def main(_):
         train_writer.close() 
           
     ###########     start test section:
-        print({x: batch[0], keep_prob: 0.5})
+#        print({x: batch[0], keep_prob: 0.5})
         print(y_conv)
         for_print = sess.run(y_conv, feed_dict={x: batch[0], keep_prob: 0.5})
         print(batch[1].shape)
 #        print (x.name)
 #        print (keep_prob.name)
-#        for_print= for_print[0, :, :, 1]
-#        plt.figure(1)
-#        plt.imshow(for_print)
-#        y_img = batch[1][0, :, :, 1]
-#        plt.figure(2)
-#        plt.imshow(y_img)
+        for_print= for_print[0, :, :, 1]
+        plt.figure(1)
+        plt.imshow(for_print)
+        y_img = batch[1][0, :, :, 1]
+        plt.figure(2)
+        plt.imshow(y_img)
+        
+        
+#######################
+
+#        print({x: batch_test[0], keep_prob: 0.5})
+#        print(y_conv)
+        for_print = sess.run(y_conv, feed_dict={x: batch_test[0], keep_prob: 0.5})
+        print(batch[1].shape)
+#        print (x.name)
+#        print (keep_prob.name)
+        for_print= for_print[0, :, :, 1]
+        plt.figure(3)
+        plt.imshow(for_print)
+        y_img = batch_test[1][0, :, :, 1]
+        plt.figure(4)
+        plt.imshow(y_img)        
+        
     ###########      end test section:
     
         print('test accuracy %g' % accuracy.eval(feed_dict={
@@ -298,5 +317,5 @@ if __name__ == '__main__':
   debug= False
   if debug:
     print("started")
+   
   tf.app.run(main=main, argv=[sys.argv[0]])
-  
