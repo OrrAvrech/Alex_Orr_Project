@@ -11,6 +11,8 @@ from dataset_NEWtf import load_dataset
 import SaveRestoreReset as srr
 # Import Models
 import Models as models
+# Handle Summaries
+import SummaryHandler as summariz
 
 import sys
 import glob
@@ -81,7 +83,7 @@ def main(_):
   global_step = tf.Variable(0, name='global_step', trainable=False)
 
   # Build the graph for the deep net
-  y_conv = models.DeconvN(x,data_params)
+  y_conv, keep_prob = models.ConvFCN(x,data_params)
 
   # Define loss and optimizer
   with tf.name_scope('loss'):
@@ -93,6 +95,10 @@ def main(_):
 
   with tf.name_scope('accuracy'):
      accuracy = cross_corr(y_conv, y_, batch_size, data_params)
+     
+  # Define and Merge Summaries
+  summariz.define_summaries(loss, accuracy, y_, y_conv)
+  summary_op = tf.summary.merge_all()
      
   with tf.Session() as sess:
     print('Initialize global variables')
@@ -109,18 +115,18 @@ def main(_):
         res_name = srr.restore(sess, ckpt_location, restored_ckpt_name, restore_mode)
         log_obj.write("\n"+"restored model name: %s" % res_name)
     log_obj.write("\n"+"samples indices from: %d to %d, with total %d iterations" % (first_sample,first_sample+num_samp, iter_num))
-             
+       
     for i in range(iter_num):
       if i == 0: print("started training") 
       batch = dataObj.train.next_batch(batch_size)
       batch_test = dataObj.test.next_batch(batch_size)
-      _, summary = sess.run([train_step, summary_op], feed_dict={x: batch[0], y_: batch[1]}) #training step
+      _, summary = sess.run([train_step, summary_op], feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5}) #training step
       if i % np.floor(iter_num/10) == 0: 
-        train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1]})
+        train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
         print('step %d, training accuracy %g' % (i, train_accuracy))
         train_writer.add_summary(summary, i)       
     print('finished at global step %s' % sess.run(global_step))
-    log_obj.write("\n"+"train accuracy: %s" % accuracy.eval(feed_dict={x: batch[0], y_: batch[1]}))
+    log_obj.write("\n"+"train accuracy: %s" % accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0}))
     log_obj.write("\n"+"finished: %s" % srr.get_time())
     log_obj.close()
     # Saving checkpoints
@@ -128,7 +134,7 @@ def main(_):
     train_writer.close()
       
 ###########     start test section:
-    for_print = sess.run(y_conv, feed_dict={x: batch[0]})
+    for_print = sess.run(y_conv, feed_dict={x: batch[0], keep_prob: 0.5})
     for_print= for_print[0, :, :, 1]
     plt.figure(1)
     plt.imshow(for_print)
@@ -136,10 +142,7 @@ def main(_):
     plt.figure(2)
     plt.imshow(y_img)
     
-    for_print = sess.run(y_conv, feed_dict={x: batch_test[0]})
-    print(batch[1].shape)
-#        print (x.name)
-#        print (keep_prob.name)
+    for_print = sess.run(y_conv, feed_dict={x: batch_test[0], keep_prob: 0.5})
     for_print= for_print[0, :, :, 1]
     plt.figure(3)
     plt.imshow(for_print)
@@ -149,7 +152,7 @@ def main(_):
 ###########      end test section:
 
     print('test accuracy %g' % accuracy.eval(feed_dict={
-            x: dataObj.test.features, y_: dataObj.test.labels}))
+            x: dataObj.test.features, y_: dataObj.test.labels, keep_prob: 1.0}))
  
  
 if __name__ == '__main__':
