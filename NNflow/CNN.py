@@ -221,22 +221,6 @@ def main(_):
       with tf.name_scope('accuracy'):
          accuracy = cross_corr(y_conv, y_, batch_size, data_params)
          
-      # Create Summaries
-      tf.summary.scalar("loss", loss)
-      tf.summary.scalar("accuracy", accuracy)
-      tf.summary.image('label1', tf.cast(tf.expand_dims(y_[:,:,:,0], axis=-1)*4,tf.uint8))
-      tf.summary.image('label2', tf.cast(tf.expand_dims(y_[:,:,:,1], axis=-1)*4,tf.uint8))
-      tf.summary.image('result1', tf.cast(tf.expand_dims(y_conv[:,:,:,0], axis=-1)*4,tf.uint8))
-      tf.summary.image('result2', tf.cast(tf.expand_dims(y_conv[:,:,:,1], axis=-1)*4,tf.uint8))
-      
-      
-      #tf.summary.image('label1', tf.cast(tf.slice(y_, [0, 0, 0, 0], [1, 64, 64, 1]), tf.uint8))
-      #tf.summary.image('label2', tf.cast(tf.slice(y_, [0, 0, 0, 1], [1, 64, 64, 2]), tf.uint8))
-      #tf.slice(logits[2], [0, 0, 0, 0], [FLAGS.batch, FLAGS.output_height, FLAGS.output_width, 1]
-      #tf.summary.image('result1', tf.cast(tf.slice(y_conv, [0, 0, 0, 0], [1, 64, 64, 1]), tf.uint8))
-      #tf.summary.image('result2', tf.cast(tf.slice(y_conv, [0, 0, 0, 1], [1, 64, 64, 2]), tf.uint8))
-      # because you have several summaries, we should merge them all
-      # into one op to make it easier to manage
       summary_op = tf.summary.merge_all()
     
       with tf.Session() as sess:
