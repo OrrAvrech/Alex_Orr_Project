@@ -46,33 +46,52 @@ Created on Tue May  1 15:21:47 2018
 #    
 #    
 #    
-def create_cfg(mode, model, num_samples):
-    cfg_node = type('', (), {}) #pointer to strruct type
-    cfg = cfg_node
-    cfg.arch_info = cfg_node
-    cfg.paths = cfg_node
-    cfg.data_params = cfg_node
-    cfg.load_info = cfg_node
-    cfg.exp_info = cfg_node
-    cfg.data_params.maxSources = None 
-    cfg.data_params.numFrames= None 
-    cfg.data_params.imgSize = None 
-    cfg.load_info.first_sample = 1 #default
-    cfg.load_info.numSamples = num_samples
-    cfg.exp_info.epochs = 100 #default
-    cfg.arch_info.model = model
-    cfg.paths.arch_path = 'arch_path'
-    cfg.exp_info.mode = 'mode' #default
-    cfg.exp_info.batch = 1 #default
+def create_cfg(mode, model = None, num_samples = None, special = None):
+    if (mode == 'initialize'):
+        cfg_node = type('', (), {}) #pointer to strruct type
+        cfg = cfg_node
+        cfg.arch_info = cfg_node
+        cfg.paths = cfg_node
+        cfg.data_params = cfg_node
+        cfg.load_info = cfg_node
+        cfg.exp_info = cfg_node
+        cfg.data_params.maxSources = None 
+        cfg.data_params.numFrames= None 
+        cfg.data_params.imgSize = None 
+        cfg.load_info.first_sample = 1 #default
+        cfg.load_info.numSamples = num_samples
+        cfg.exp_info.epochs = 100 #default
+        cfg.arch_info.model = model
+        cfg.arch_info.lr = 1e-3
+        cfg.paths.arch_path = 'arch_path'
+        cfg.exp_info.mode = mode #default
+        cfg.exp_info.batch = 1 #default
+    
+    if (mode == 'change_val'):
+        print('cfg.arch_info' + special[0])#debug
+        cfg = special[0]
+        method_to_call = getattr(cfg,'arch_info')
+        getattr(method_to_call ,special[1])
+    
+    
+    
+    
     
     
     return cfg
 
+    #debug    #debug    #debug    #debug    #debug    #debug    #debug
     
-    
-    
-    
-    
+valid_param = 'lr'
+valid_values = [1e-3, 2e-3]
+cfg = create_cfg('initialize','model_name' ,     10)
+param_name = cfg.exp_info.valid_param
+method_to_call = getattr(cfg, valid_param)
+for i in cfg.valid_values:
+    method_to_call() = i # maybe method_to_call(i)
+    print(method_to_call())
+
+
     
     
     
