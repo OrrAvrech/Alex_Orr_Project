@@ -4,27 +4,43 @@ Created on Sat May  5 22:19:16 2018
 
 @author: afinkels
 """
-from UserConfig import create_cfg
+import UserConfig as user
 
+model_name = 'Deconv'
+run_mode = 'validation'
+dataset_name = 'im64_f16_s4'
 
-def execute_exp(cfg):
-    if (cfg.exp_info.run_mode == 'validation'):
-        param_name = cfg.exp_info.valid_param
-        method_to_call = getattr(cfg, param_name)
-        for i in cfg.exp_info.valid_values:
-            method_to_call() = i # maybe method_to_call(i)
-            train(cfg)
+cfg = user.create_cfg(dataset_name, run_mode, model_name)
+################
+## fill out
 
+# Data Fields
+cfg.data.maxSources = None 
+cfg.data.numFrames= None 
+cfg.data.imgSize = None 
 
+# Directories    
 
+# Load Data Fields
+cfg.load.first_sample = 1  
 
+# Current Experiment    
+cfg.exp.batch = 1 
+cfg.exp.epochs = 100 
 
-model_name = 'name'
-run_mode = 'mode'
-num_samples = 1000
+# Architecture Parameters
+cfg.arch.lr = 1e-3
 
-cfg = create_cfg(run_mode, model_name, num_samples)
+###############
 
-
-
-execute_exp(cfg)
+##########
+## Execute
+##########
+param_name = 'arch.lr'
+param_vals = [1.2, 1.3]
+for i in param_vals:
+    user.config_handler(cfg, param_name, i)
+    user.execute_exp(cfg)
+#    print(cfg.arch.lr)
+#user.config_handler(cfg, 'lr', 0.2)
+    

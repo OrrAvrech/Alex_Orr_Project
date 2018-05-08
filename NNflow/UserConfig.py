@@ -1,95 +1,74 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue May  1 15:21:47 2018
 
-@author: sorrav
-"""
-#
-#class Config:
-#    
-#    SECRET_KEY = 'secret-key-of-myapp'
-#    ADMIN_NAME = 'administrator'
-#
-#    AWS_DEFAULT_REGION = 'ap-northeast-2'
-#    
-#    STATIC_PREFIX_PATH = 'static'
-#    ALLOWED_IMAGE_FORMATS = ['jpg', 'jpeg', 'png', 'gif']
-#    MAX_IMAGE_SIZE = 5242880 # 5MB
-#
-#    
-#class DevelopmentConfig(Config):
-#    DEBUG = True
-#    
-#    AWS_ACCESS_KEY_ID = 'aws-access-key-for-dev'
-#    AWS_SECERT_ACCESS_KEY = 'aws-secret-access-key-for-dev'
-#    AWS_S3_BUCKET_NAME = 'aws-s3-bucket-name-for-dev'
-#    
-#    DATABASE_URI = 'database-uri-for-dev'
-#    
-#
-#
-#class Exp_Config:
-#    ##deault vals:
-#    parent_path = None
-#    graph_path = None
-#    exp_path = None
-#    maxSources = None
-#    numFrames = None
-#    numSamples = None
-#    imgSize = None
-#    
-#    _CONFIG = {
-#    'paths': {'parent_path': parent_path, 'graph_path': graph_path, 'exp_path': exp_path},
-#    'dataParams': {'maxSources': maxSources, 'numFrames': numFrames, 'numSamples': numSamples, 'imgSize': imgSize],
-#    'flage': 'value',
-#    }
-#    
-#    
-#    
-def create_cfg(mode, model = None, num_samples = None, special = None):
-    if (mode == 'initialize'):
-        cfg_node = type('', (), {}) #pointer to strruct type
-        cfg = cfg_node
-        cfg.arch_info = cfg_node
-        cfg.paths = cfg_node
-        cfg.data_params = cfg_node
-        cfg.load_info = cfg_node
-        cfg.exp_info = cfg_node
-        cfg.data_params.maxSources = None 
-        cfg.data_params.numFrames= None 
-        cfg.data_params.imgSize = None 
-        cfg.load_info.first_sample = 1 #default
-        cfg.load_info.numSamples = num_samples
-        cfg.exp_info.epochs = 100 #default
-        cfg.arch_info.model = model
-        cfg.arch_info.lr = 1e-3
-        cfg.paths.arch_path = 'arch_path'
-        cfg.exp_info.mode = mode #default
-        cfg.exp_info.batch = 1 #default
+import os
+
+import Train
+
+def create_cfg(dataset, mode, model):
+    # Init Config Empty Nodes
+    cfg_node = type('', (), {}) #pointer to struct type
+    cfg = cfg_node
+    cfg.arch = cfg_node
+    cfg.paths = cfg_node
+    cfg.paths.graphs = cfg_node
+    cfg.data = cfg_node
+    cfg.load = cfg_node
+    cfg.exp = cfg_node
+
+    # Data Fields
+    cfg.data.name = dataset
+    cfg.data.maxSources = None 
+    cfg.data.numFrames= None 
+    cfg.data.imgSize = None 
     
-    if (mode == 'change_val'):
-        print('cfg.arch_info' + special[0])#debug
-        cfg = special[0]
-        method_to_call = getattr(cfg,'arch_info')
-        getattr(method_to_call ,special[1])
+    # Directories    
+    file_path = os.path.dirname(os.path.abspath(__file__))    
+    cfg.paths.graphs.base = os.path.join(file_path, 'graphs', dataset)  
     
+    # Load Data Fields
+    cfg.load.first_sample = 1 
+    cfg.load.numSamples = 10
     
+    # Current Experiment    
+    cfg.exp.mode = mode # validation/train/test
+    cfg.exp.batch = 1 
+    cfg.exp.epochs = 100 
     
-    
-    
+    # Architecture Parameters
+    cfg.arch.model = model # Deconv/FC...
+    cfg.arch.lr = 1e-3
     
     return cfg
-
-    #debug    #debug    #debug    #debug    #debug    #debug    #debug
     
-valid_param = 'lr'
-valid_values = [1e-3, 2e-3]
-cfg = create_cfg('initialize','model_name' ,     10)
-param_name = cfg.exp_info.valid_param
-method_to_call = getattr(cfg, valid_param)
-for i in cfg.valid_values:
-    method_to_call() = i # maybe method_to_call(i)
-    print(method_to_call())
+
+def config_handler(cfg, param_name, value):
+
+    if not os.path.exists(cfg.paths.graphs.base):
+        os.makedirs(cfg.paths.graphs.base)
+    if not os.path.exists(os.path.join(cfg.paths.graphs.base, cfg.arch.model)):
+        os.makedirs(os.path.join(cfg.paths.graphs.base, cfg.arch.model))
+    if not os.path.exists(os.path.join(cfg.paths.graphs.base, cfg.arch.model, param_name)):
+        os.makedirs(os.path.join(cfg.paths.graphs.base, cfg.arch.model, param_name))
+    if not os.path.exists(os.path.join(cfg.paths.graphs.base, cfg.arch.model, param_name, str(value))):
+        cfg.paths.graphs.value = os.makedirs(os.path.join(cfg.paths.graphs.base, cfg.arch.model, param_name, str(value)))
+    
+    if param_name == 'arch.lr':
+        cfg.arch.lr = value
+        
+#    elif param_name == 'lr':
+#    elif param_name == 'lr':    
+#    elif param_name == 'lr':    
+    
+    return cfg
+    
+    
+def execute_exp(cfg):
+    Train.main(cfg)
+#    if (cfg.exp_info.run_mode == 'validation'):
+#        param_name = cfg.exp_info.valid_param
+#        method_to_call = getattr(cfg, param_name)
+#        for i in cfg.exp_info.valid_values:
+#            method_to_call() = i # maybe method_to_call(i)
+#            train(cfg)
 
 
     

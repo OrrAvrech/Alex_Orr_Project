@@ -24,8 +24,6 @@ import matplotlib.pyplot as plt
 def cross_corr(logits, labels, batch_size, data_params):
     maxSources = data_params[2]
     imgSize = data_params[0]
-    if debug:
-      print("cross_corr:")
     for i in range(batch_size):  
         y_conv = logits[i, 0:imgSize, 0:imgSize, 0:maxSources]
         y_conv = tf.reshape(y_conv, [1, imgSize, imgSize, maxSources])
@@ -42,7 +40,7 @@ def l1_loss(logits, gt):
   L1_loss = tf.reduce_mean(valus_diff)
   return L1_loss
 
-def main(_):
+def main(cfg):
   # Save Graph and Checkpoints
   srr.reset()
   file_path = os.path.dirname(os.path.abspath(__file__))
@@ -68,7 +66,7 @@ def main(_):
       # Import data
       first_sample = 1
       num_samp = 10#00
-      epochs = 200#00
+      epochs = 2#00
       iter_num = num_samp*epochs
       dataObj, imgSize, numFrames, maxSources = load_dataset(first_sample,num_samp)
       data_params = [imgSize, numFrames, maxSources]
