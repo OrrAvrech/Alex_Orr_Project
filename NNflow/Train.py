@@ -44,9 +44,9 @@ def main(cfg):
   # Save Graph and Checkpoints
   srr.reset()
   file_path = os.path.dirname(os.path.abspath(__file__))
-  graph_location = os.path.join(file_path,'graphs','graph_im64_f8_s4')
-  ckpt_location = os.path.join(file_path,'checkpoints','ckpt_im64_f8_s4')
-  model_name = 'im64_f8_s4'
+  graph_location = os.path.join(file_path,'graphs','graph_im64_f8_s2')
+  ckpt_location = os.path.join(file_path,'checkpoints','ckpt_im64_f8_s2')
+  model_name = 'im64_f8_s2'
   arch_func = models.DeconvN
   arch_name = 'DeconvN'
   restored_ckpt_name = 'im64_f8_s4_2018-04-04_1615' # for name mode in restore
@@ -65,8 +65,8 @@ def main(cfg):
   with tf.name_scope('data'):  
       # Import data
       first_sample = 1
-      num_samp = 10#00
-      epochs = 2#00
+      num_samp = 5000
+      epochs = 2
       iter_num = num_samp*epochs
       dataObj, imgSize, numFrames, maxSources = load_dataset(first_sample,num_samp)
       data_params = [imgSize, numFrames, maxSources]
