@@ -149,16 +149,20 @@ def read_data_sets(path, start_idx, end_idx, save):
   train = DataSet(train_features, train_labels)
   validation = DataSet(validation_features, validation_labels)
   test = DataSet(test_features, test_labels)
+  
+  # Saving dataObj to a file (for reusing it later on)
+  if save == True:
+      trainFile = open(os.path.join(path, 'train.obj'), 'wb') # in Windows use 'w'/'r' only for text files
+      pickle.dump(train, trainFile)
+      validationFile = open(os.path.join(path, 'validation.obj'), 'wb')
+      pickle.dump(validation, validationFile)
+      testFile = open(os.path.join(path, 'test.obj'), 'wb')
+      pickle.dump(test, testFile)
 
   dataObj = type('', (), {})()
   dataObj.train = train
   dataObj.validation = validation
   dataObj.test = test
-  
-  # Saving dataObj to a file (for reusing it later on)
-  if save == True:
-      dataFile = open(os.path.join(path, 'data.obj'), 'w')
-      pickle.dump(dataObj, dataFile)
   
   return dataObj, imgSize, numFrames, maxSources
 
