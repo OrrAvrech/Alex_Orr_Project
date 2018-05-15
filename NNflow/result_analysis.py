@@ -7,15 +7,14 @@ Created on Wed Apr  4 19:08:40 2018
 
 import net_output_gen as nog
 import os
-import numpy as np
 from dataset_NEWtf import load_dataset
 import matplotlib.pyplot as plt
+import tensorflow as tf
 
 
-from tensorflow.python.tools.inspect_checkpoint import print_tensors_in_checkpoint_file
 file_path = os.path.dirname(os.path.abspath(__file__))
-model_name = 'im64_f8_s4'
-ckpt_name = model_name+'_2018-04-09_1635'
+model_name = 'im64_f8_s2'
+ckpt_name = model_name+'_2018-05-11_1356'
 ckpt_path = os.path.join(file_path,'checkpoints','ckpt_'+model_name,ckpt_name)
 
 dataObj, _, _, _ = load_dataset(1,5)
@@ -28,11 +27,7 @@ dataObj, _, _, _ = load_dataset(1,5)
 sample = dataObj.test.features
 label = dataObj.test.labels
 
-
-# List ALL tensors example output: v0/Adam (DT_FLOAT) [3,3,1,80]
-#print_tensors_in_checkpoint_file(file_name=ckpt_path , tensor_name='y_conv:0', all_tensors=False)
-
-
+tf.reset_default_graph()
 estimated = nog.net_output_gen('reshape_y/y_conv:0',['x:0','dropout/keep_prob:0'],[sample, 0.5], ckpt_path, 'name')
 
 #### y_conv analysis

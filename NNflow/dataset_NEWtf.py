@@ -9,6 +9,7 @@ Created on Sun Jan 14 01:05:30 2018
 import numpy as np
 import h5py
 import os
+import pickle
 
 def datasetFromMat(path, start_idx, end_idx, test_perc):
         
@@ -125,7 +126,7 @@ class DataSet(object):
       return self._features[start:end], self._labels[start:end]
 
 
-def read_data_sets(path, start_idx, end_idx):
+def read_data_sets(path, start_idx, end_idx, save):
 
   # Parameters: validation set and test set sizes  
   test_perc = 0.2
@@ -148,16 +149,27 @@ def read_data_sets(path, start_idx, end_idx):
   train = DataSet(train_features, train_labels)
   validation = DataSet(validation_features, validation_labels)
   test = DataSet(test_features, test_labels)
+  
+  # Saving dataObj to a file (for reusing it later on)
+  if save == True:
+      trainFile = open(os.path.join(path, 'train.obj'), 'wb') # in Windows use 'w'/'r' only for text files
+      pickle.dump(train, trainFile)
+      validationFile = open(os.path.join(path, 'validation.obj'), 'wb')
+      pickle.dump(validation, validationFile)
+      testFile = open(os.path.join(path, 'test.obj'), 'wb')
+      pickle.dump(test, testFile)
 
   dataObj = type('', (), {})()
   dataObj.train = train
   dataObj.validation = validation
   dataObj.test = test
+  
   return dataObj, imgSize, numFrames, maxSources
 
 def load_dataset(start_idx, num_samp):
   file_path = os.path.dirname(os.path.abspath(__file__))
   path = os.path.join(file_path,'..','DataSimulation','Dataset_im64_f8_s2')
   end_idx = start_idx + num_samp
-  return read_data_sets(path, start_idx, end_idx)
+  saveObj2file = True
+  return read_data_sets(path, start_idx, end_idx, saveObj2file)
 
