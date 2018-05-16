@@ -126,50 +126,57 @@ class DataSet(object):
       return self._features[start:end], self._labels[start:end]
 
 
-def read_data_sets(path, start_idx, end_idx, save):
+def read_data_sets(path, start_idx, end_idx, loadObj, saveObj2file):
 
   # Parameters: validation set and test set sizes  
   test_perc = 0.2
   validation_perc = 0.2 # out of train size
   
-  datasetMat, imgSize, numFrames, maxSources = datasetFromMat(path, start_idx, end_idx, test_perc)  
+  if loadObj == True:
+      with open(os.path.join(path, set_str + '.obj'), 'rb') as dataFile:
+        dataObj = pickle.load(dataFile)
+        img_size = dataObj.train.labels.shape[0]
+        print(img_size)
+        maxSources = dataObj.train.labels.shape[-1]
+        print(maxSources)
+        numFrames = dataObj.train.features.shape[-1]
+        print(numFrames)
+  else:
+      datasetMat, imgSize, numFrames, maxSources = datasetFromMat(path, start_idx, end_idx, test_perc)  
     
-  train_features = datasetMat.train_features
-  train_labels   = datasetMat.train_labels  
-  test_features  = datasetMat.test_features
-  test_labels    = datasetMat.test_labels
+      train_features = datasetMat.train_features
+      train_labels   = datasetMat.train_labels  
+      test_features  = datasetMat.test_features
+      test_labels    = datasetMat.test_labels
+        
+      validation_size = np.rint(validation_perc * np.float_(train_features.shape[0])).astype(int)
+      
+      validation_features = train_features[:validation_size]
+      validation_labels = train_labels[:validation_size]
+      train_features = train_features[validation_size:]
+      train_labels = train_labels[validation_size:]
     
-  validation_size = np.rint(validation_perc * np.float_(train_features.shape[0])).astype(int)
-  
-  validation_features = train_features[:validation_size]
-  validation_labels = train_labels[:validation_size]
-  train_features = train_features[validation_size:]
-  train_labels = train_labels[validation_size:]
-
-  train = DataSet(train_features, train_labels)
-  validation = DataSet(validation_features, validation_labels)
-  test = DataSet(test_features, test_labels)
-  
-  # Saving dataObj to a file (for reusing it later on)
-  if save == True:
-      trainFile = open(os.path.join(path, 'train.obj'), 'wb') # in Windows use 'w'/'r' only for text files
-      pickle.dump(train, trainFile)
-      validationFile = open(os.path.join(path, 'validation.obj'), 'wb')
-      pickle.dump(validation, validationFile)
-      testFile = open(os.path.join(path, 'test.obj'), 'wb')
-      pickle.dump(test, testFile)
-
-  dataObj = type('', (), {})()
-  dataObj.train = train
-  dataObj.validation = validation
-  dataObj.test = test
+      train = DataSet(train_features, train_labels)
+      validation = DataSet(validation_features, validation_labels)
+      test = DataSet(test_features, test_labels)
+      
+      # Saving dataObj to a file (for reusing it later on)
+      if saveObj2file == True:
+          trainFile = open(os.path.join(path, 'train.obj'), 'wb') # in Windows use 'w'/'r' only for text files
+          pickle.dump(train, trainFile)
+          validationFile = open(os.path.join(path, 'validation.obj'), 'wb')
+          pickle.dump(validation, validationFile)
+          testFile = open(os.path.join(path, 'test.obj'), 'wb')
+          pickle.dump(test, testFile)
+    
+      dataObj = type('', (), {})()
+      dataObj.train = train
+      dataObj.validation = validation
+      dataObj.test = test
   
   return dataObj, imgSize, numFrames, maxSources
 
-def load_dataset(start_idx, num_samp):
-  file_path = os.path.dirname(os.path.abspath(__file__))
-  path = os.path.join(file_path,'..','DataSimulation','Dataset_im64_f8_s2')
+def load_dataset(start_idx, num_samp, path, loadObj, saveObj2file=False):
   end_idx = start_idx + num_samp
-  saveObj2file = True
-  return read_data_sets(path, start_idx, end_idx, saveObj2file)
+  return read_data_sets(path, start_idx, end_idx, loadObj, saveObj2file)
 
