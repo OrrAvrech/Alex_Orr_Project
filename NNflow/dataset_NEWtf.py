@@ -133,14 +133,16 @@ def read_data_sets(path, start_idx, end_idx, loadObj, saveObj2file):
   validation_perc = 0.2 # out of train size
   
   if loadObj == True:
-      with open(os.path.join(path, set_str + '.obj'), 'rb') as dataFile:
-        dataObj = pickle.load(dataFile)
-        img_size = dataObj.train.labels.shape[0]
-        print(img_size)
-        maxSources = dataObj.train.labels.shape[-1]
-        print(maxSources)
-        numFrames = dataObj.train.features.shape[-1]
-        print(numFrames)
+      with open(os.path.join(path, 'train.obj'), 'rb') as trainFile:
+        train = pickle.load(trainFile)
+        imgSize = train.labels.shape[0]
+        maxSources = train.labels.shape[-1]
+        numFrames = train.features.shape[-1]
+      with open(os.path.join(path, 'validation.obj'), 'rb') as validationFile:
+        validation = pickle.load(validationFile)
+      with open(os.path.join(path, 'test.obj'), 'rb') as testFile:
+        test = pickle.load(testFile)
+      
   else:
       datasetMat, imgSize, numFrames, maxSources = datasetFromMat(path, start_idx, end_idx, test_perc)  
     
@@ -169,10 +171,10 @@ def read_data_sets(path, start_idx, end_idx, loadObj, saveObj2file):
           testFile = open(os.path.join(path, 'test.obj'), 'wb')
           pickle.dump(test, testFile)
     
-      dataObj = type('', (), {})()
-      dataObj.train = train
-      dataObj.validation = validation
-      dataObj.test = test
+  dataObj = type('', (), {})()
+  dataObj.train = train
+  dataObj.validation = validation
+  dataObj.test = test
   
   return dataObj, imgSize, numFrames, maxSources
 
