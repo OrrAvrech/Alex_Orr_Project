@@ -4,7 +4,7 @@ import os
 import Train
 from dataset_NEWtf import load_dataset
 
-def create_cfg(dataset, mode, model):
+def create_cfg(dataset):
     # Init Config Empty Nodes
     cfg = type('', (), {})
     cfg.arch = type('', (), {})
@@ -25,6 +25,8 @@ def create_cfg(dataset, mode, model):
     cfg.paths.dataset = os.path.join(file_path,'..','DataSimulation','Dataset_' + dataset[0])
     cfg.paths.graphs.base = os.path.join(file_path, 'graphs', dataset[0])  
     cfg.paths.ckpts = os.path.join(file_path, 'checkpoints', dataset[0])  
+    # TODO:
+    cfg.paths.best_model = 'best_model.keras'
 
     # Load Data Fields
     cfg.load.first_sample = dataset[1]
@@ -42,12 +44,12 @@ def create_cfg(dataset, mode, model):
     cfg.data.obj = dataObj
     
     # Current Experiment    
-    cfg.exp.mode = mode # validation/train/test
+    # TODO: cfg.exp.mode = mode # validation/train/test
     cfg.exp.batch = 1 
-    cfg.exp.epochs = 100 
+    cfg.exp.epochs = 10 
     
     # Architecture Parameters
-    cfg.arch.model = model # Deconv/FC...
+    # TODO: cfg.arch.model = model # Deconv/FC...
     cfg.arch.lr = 1e-3
     
     # Restore Model

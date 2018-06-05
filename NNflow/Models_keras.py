@@ -1,12 +1,19 @@
 import tensorflow as tf
 from tensorflow.python.keras import layers
 from tensorflow.python.keras.optimizers import Adam
+# Import UserConfig
+from Main_keras import cfg
 
-def cross_corr(logits, labels ):
-    batch_size = 2
-    data_params = ([64,16,4])
-    maxSources = data_params[2]
-    imgSize = data_params[0]
+#%% Global Constants (per dataset)
+maxSources = cfg.data.maxSources
+numFrames  = cfg.data.numFrames
+imgSize    = cfg.data.imgSize
+batch_size = cfg.exp.batch # TODO: should by hyperparam
+
+#%% Hyperparams
+
+#%% Accuracy Metrices
+def cross_corr(logits, labels):
     for i in range(batch_size):  
         y_conv = logits[i, 0:imgSize, 0:imgSize, 0:maxSources]
         y_conv = tf.reshape(y_conv, [1, imgSize, imgSize, maxSources])
@@ -18,7 +25,8 @@ def cross_corr(logits, labels ):
         result += tf.reduce_mean(corr2d)
     return result/batch_size
 
-def DeconvN(data_params):
+#%% Deconvolutional Network model
+def DeconvN():
   """DeconvN builds the graph for a deconvolutional net for seperating emitters.
   Args:
     data_params: [imgSize, numFrames, maxSources]  
@@ -31,9 +39,6 @@ def DeconvN(data_params):
   # Reshape to use within a convolutional neural net.
   # Last dimension is for "features" - it would be 1 for grayscale
   # 3 for an RGB image, 4 for RGBA, numFrames for a movie.    
-  maxSources = data_params[2]
-  numFrames = data_params[1]
-  imgSize = data_params[0]
   input_size_flat = imgSize * imgSize * numFrames
   input_shape_full = (imgSize, imgSize, numFrames)
   
@@ -95,7 +100,7 @@ def DeconvN(data_params):
   # Use the Adam method for training the network.
   # We want to find the best learning-rate for the Adam method.
   # TODO: learning rate param
-  optimizer = Adam(lr=1e-4)
+  optimizer = Adam(lr=1e-3)
     
   # In Keras we need to compile the model so it can be trained.
   model.compile(optimizer=optimizer,
