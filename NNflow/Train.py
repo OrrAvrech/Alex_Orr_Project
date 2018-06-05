@@ -5,8 +5,6 @@ Created on Thu Apr 12 00:04:29 2018
 @author: sorrav
 """
 
-# Load DataSet
-from dataset_NEWtf import load_dataset
 # Code for saving and restoring the model
 import SaveRestoreReset as srr
 # Import Models
@@ -43,18 +41,17 @@ def l1_loss(logits, gt):
 def main(cfg):
   # Save Graph and Checkpoints
   srr.reset()
-  file_path = os.path.dirname(os.path.abspath(__file__))
-  graph_location = os.path.join(file_path,'graphs','graph_im64_f8_s2')
-  ckpt_location = os.path.join(file_path,'checkpoints','ckpt_im64_f8_s2')
-  model_name = 'im64_f8_s2'
-  arch_func = models.DeconvN
-  arch_name = 'DeconvN'
-  restored_ckpt_name = 'im64_f8_s4_2018-04-04_1615' # for name mode in restore
+  graph_location = cfg.paths.graphs.value
+  ckpt_location = cfg.paths.ckpts
+  model_name = cfg.data.name
+  arch_func = models.DeconvN #TODO: from config
+  arch_name = cfg.arch.model
+  restored_ckpt_name = cfg.restore.model # for name mode in restore
   if not os.path.exists(ckpt_location):
     os.makedirs(ckpt_location)
   # Restore params  
-  restoreFlag = 0  
-  restore_mode = 'last' #last - take last checkpoint, name - get apecific checkpoint by name, best - take checkpoint with best accuracy so far (not supported yet)
+  restoreFlag = cfg.restore.flag  
+  restore_mode = cfg.restore.mode #last - take last checkpoint, name - get apecific checkpoint by name, best - take checkpoint with best accuracy so far (not supported yet)
   
   # Manage checkpoints log
   log_obj = srr.get_log(ckpt_location, model_name+ '_' + arch_name)
@@ -64,17 +61,20 @@ def main(cfg):
   
   with tf.name_scope('data'):  
       # Import data
-      first_sample = 1
-      num_samp = 5000
-      epochs = 2
+      first_sample = cfg.load.first_sample
+      num_samp = cfg.load.numSamples
+      epochs = cfg.exp.epochs
       iter_num = num_samp*epochs
-      dataObj, imgSize, numFrames, maxSources = load_dataset(first_sample,num_samp)
+      dataObj = cfg.data.obj
+      imgSize = cfg.data.imgSize
+      numFrames = cfg.data.numFrames
+      maxSources = cfg.data.maxSources
       data_params = [imgSize, numFrames, maxSources]
       print("loaded data with the following params:")
       print("imgSize is:" +str(imgSize))
       print("numFrames is:" +str(numFrames))
       print("maxSources is:" +str(maxSources))
-      batch_size = 1
+      batch_size = cfg.exp.batch
 
   # Create the model
   x = tf.placeholder(tf.float32, [None, imgSize, imgSize, numFrames], name='x')
@@ -89,7 +89,7 @@ def main(cfg):
      loss = l1_loss(y_,y_conv) 
 
   with tf.name_scope('adam_optimizer'):
-    lr = 1e-3
+    lr = cfg.arch.lr
     train_step = tf.train.AdamOptimizer(lr).minimize(loss, global_step=global_step)
 
   with tf.name_scope('accuracy'):
@@ -105,10 +105,10 @@ def main(cfg):
     
     # Create writer objects
     print('Saving graph to: %s' % graph_location)
-    files_before = glob.glob(os.path.join(graph_location,'*'))
     train_writer = tf.summary.FileWriter(graph_location, graph=tf.get_default_graph())
-    new_file = set(files_before).symmetric_difference(set(glob.glob(os.path.join(graph_location,'*'))))
-    log_obj.write("\n"+"Graph file name: %s" % (''.join(new_file)))
+#    files_before = glob.glob(os.path.join(graph_location,'*')) # Extractes graph name
+#    new_file = set(files_before).symmetric_difference(set(glob.glob(os.path.join(graph_location,'*'))))
+#    log_obj.write("\n"+"Graph file name: %s" % (''.join(new_file)))
     
     if restoreFlag:
         res_name = srr.restore(sess, ckpt_location, restored_ckpt_name, restore_mode)
@@ -120,6 +120,7 @@ def main(cfg):
       batch = dataObj.train.next_batch(batch_size)
       batch_test = dataObj.test.next_batch(batch_size)
       _, summary = sess.run([train_step, summary_op], feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5}) #training step
+      
       if i % np.floor(iter_num/10) == 0: 
         train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
         print('step %d, training accuracy %g' % (i, train_accuracy))

@@ -8,36 +8,35 @@ import UserConfig as user
 
 model_name = 'Deconv'
 run_mode = 'validation'
-dataset_name = 'im64_f16_s4'
+dataset_name = 'im64_f8_s2'
+firstSample = 1
+numSamples = 10
+LoadObj = False
+dataset_params = [dataset_name, firstSample, numSamples, LoadObj]
 
-cfg = user.create_cfg(dataset_name, run_mode, model_name)
+cfg = user.create_cfg(dataset_params, run_mode, model_name)
 ################
 ## fill out
 
 # Data Fields
-cfg.data.maxSources = None 
-cfg.data.numFrames= None 
-cfg.data.imgSize = None 
 
 # Directories    
 
 # Load Data Fields
-cfg.load.first_sample = 1  
 
 # Current Experiment    
-cfg.exp.batch = 1 
-cfg.exp.epochs = 100 
+cfg.exp.batch = 1
+cfg.exp.epochs = 500
 
 # Architecture Parameters
 cfg.arch.lr = 1e-3
-
 ###############
 
 ##########
 ## Execute
 ##########
 param_name = 'arch.lr'
-param_vals = [1.2, 1.3]
+param_vals = [1e-3]
 for i in param_vals:
     user.config_handler(cfg, param_name, i)
     user.execute_exp(cfg)

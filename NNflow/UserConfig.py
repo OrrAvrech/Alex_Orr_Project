@@ -2,36 +2,44 @@
 import os
 
 import Train
+from dataset_NEWtf import load_dataset
 
 def create_cfg(dataset, mode, model):
     # Init Config Empty Nodes
-    cfg_node = type('', (), {}) #pointer to struct type
-    cfg = cfg_node
-    cfg.arch = cfg_node
-    cfg.paths = cfg_node
-    cfg.paths.graphs = cfg_node
-    cfg.data = cfg_node
-    cfg.load = cfg_node
-    cfg.exp = cfg_node
-    cfg.FLAGS = cfg_node    
-    cfg.restore = cfg_node    
+    cfg = type('', (), {})
+    cfg.arch = type('', (), {})
+    cfg.paths = type('', (), {})
+    cfg.paths.graphs = type('', (), {})
+    cfg.data = type('', (), {})
+    cfg.load = type('', (), {})
+    cfg.exp = type('', (), {})
+    cfg.FLAGS = type('', (), {})
+    cfg.restore = type('', (), {})
     
     # FLAGS
     cfg.FLAGS.save_ckpt = False
-
-    # Data Fields
-    cfg.data.name = dataset
-    cfg.data.maxSources = None 
-    cfg.data.numFrames= None 
-    cfg.data.imgSize = None 
+    cfg.FLAGS.LoadObj = dataset[3]
     
     # Directories    
     file_path = os.path.dirname(os.path.abspath(__file__))    
-    cfg.paths.graphs.base = os.path.join(file_path, 'graphs', dataset)  
-    
+    cfg.paths.dataset = os.path.join(file_path,'..','DataSimulation','Dataset_' + dataset[0])
+    cfg.paths.graphs.base = os.path.join(file_path, 'graphs', dataset[0])  
+    cfg.paths.ckpts = os.path.join(file_path, 'checkpoints', dataset[0])  
+
     # Load Data Fields
-    cfg.load.first_sample = 1 
-    cfg.load.numSamples = 10
+    cfg.load.first_sample = dataset[1]
+    cfg.load.numSamples = dataset[2]
+    
+    # Data Fields
+    dataObj, imgSize, numFrames, maxSources = load_dataset(cfg.load.first_sample, 
+                                                           cfg.load.numSamples, 
+                                                           cfg.paths.dataset, 
+                                                           cfg.FLAGS.LoadObj)
+    cfg.data.name = dataset[0]
+    cfg.data.maxSources = maxSources
+    cfg.data.numFrames= numFrames
+    cfg.data.imgSize = imgSize
+    cfg.data.obj = dataObj
     
     # Current Experiment    
     cfg.exp.mode = mode # validation/train/test
@@ -54,12 +62,14 @@ def config_handler(cfg, param_name, value):
 
     if not os.path.exists(cfg.paths.graphs.base):
         os.makedirs(cfg.paths.graphs.base)
-    if not os.path.exists(os.path.join(cfg.paths.graphs.base, cfg.arch.model + cfg.exp.mode)):
-        os.makedirs(os.path.join(cfg.paths.graphs.base, cfg.arch.model + cfg.exp.mode))
-    if not os.path.exists(os.path.join(cfg.paths.graphs.base, cfg.arch.model + cfg.exp.mode, param_name)):
-        os.makedirs(os.path.join(cfg.paths.graphs.base, cfg.arch.model + cfg.exp.mode, param_name))
-    if not os.path.exists(os.path.join(cfg.paths.graphs.base, cfg.arch.model + cfg.exp.mode, param_name, str(value))):
-        cfg.paths.graphs.value = os.makedirs(os.path.join(cfg.paths.graphs.base, cfg.arch.model + cfg.exp.mode, param_name, str(value)))
+    if not os.path.exists(os.path.join(cfg.paths.graphs.base, cfg.arch.model)):
+        os.makedirs(os.path.join(cfg.paths.graphs.base, cfg.arch.model))
+    if not os.path.exists(os.path.join(cfg.paths.graphs.base, cfg.arch.model, param_name)):
+        os.makedirs(os.path.join(cfg.paths.graphs.base, cfg.arch.model, param_name))
+    cfg.paths.graphs.value = os.path.join(cfg.paths.graphs.base, cfg.arch.model, param_name, str(value))
+    if not os.path.exists(cfg.paths.graphs.value):
+        os.makedirs(cfg.paths.graphs.value)
+
     
     if param_name == 'arch.lr':
         cfg.arch.lr = value
@@ -67,7 +77,7 @@ def config_handler(cfg, param_name, value):
 #    elif param_name == 'lr':
 #    elif param_name == 'lr':    
 #    elif param_name == 'lr':    
-    
+    print(cfg.paths.graphs.value)
     return cfg
     
     
