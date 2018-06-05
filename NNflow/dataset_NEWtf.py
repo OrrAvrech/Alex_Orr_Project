@@ -168,7 +168,7 @@ def read_data_sets(path, start_idx, end_idx, save):
 
 def load_dataset(start_idx, num_samp):
   file_path = os.path.dirname(os.path.abspath(__file__))
-  path = os.path.join(file_path,'..','DataSimulation','Dataset_im64_f8_s2')
+  path = os.path.join(file_path,'..','DataSimulation','Dataset_im64_f64_s16')
   end_idx = start_idx + num_samp
   saveObj2file = True
   return read_data_sets(path, start_idx, end_idx, saveObj2file)

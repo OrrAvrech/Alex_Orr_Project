@@ -6,7 +6,7 @@ rng(33545);
 % NOTE: If Emitters' class is not struct --> Generate Single Tetrapod Image
 
 %% Load masks - needed for the tetrapod PSF generation
-original_path = cdir('..\TetrapodPSF\');
+original_path = cdir('../TetrapodPSF/');
 load('SPmask4um.mat','maskBest');
 
 %% Set parameters for the tetrapod PSF generation, per each z plane

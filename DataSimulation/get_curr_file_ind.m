@@ -8,7 +8,7 @@ function file_ind = get_curr_file_ind(save_to_dir,file_ind)
         mkdir(save_to_dir);
     end
     
-    original_path = cdir([save_to_dir,'\']); %change to saving destination
+    original_path = cdir([save_to_dir,'/']); %change to saving destination
     
     dest_listing = dir;
     if ~dest_listing(end).isdir %is empty?
