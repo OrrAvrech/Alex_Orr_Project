@@ -5,23 +5,10 @@ from tensorflow.python.keras import backend as K
 
 #%% Accuracy Metrices
 def cross_corr(y_pred, y_label):
-    res = 0
-#    tf_session = K.get_session()
-#    shape = K.shape(y_label).eval(session=tf_session)
-#    batch_size = shape[0]
-#    maxSources = shape[-1]
-    batch_size = 1
-    maxSources = 2
-    for ii in range(batch_size):  
-        resSources = 0
-        for jj in range(maxSources):
-            pred   = K.flatten(y_pred[ii,:,:,jj])
-            label  = K.flatten(y_label[ii,:,:,jj])
-            Npred  = (pred - K.mean(pred)) / K.std(pred)
-            Nlabel = (label - K.mean(label)) / K.std(label)
-            resSources += K.abs(K.mean(Npred * Nlabel))
-        res += resSources/maxSources
-    return res/batch_size
+    Npred  = (y_pred - K.mean(y_pred, [1,2], keepdims=True)) / K.std(y_pred, [1, 2], keepdims=True)
+    Nlabel = (y_label - K.mean(y_label, [1,2], keepdims=True)) / K.std(y_label, [1, 2], keepdims=True)
+    res = K.abs(K.mean(Npred * Nlabel, [1, 2], keepdims=True))
+    return K.mean(res)
 
 #%% Deconvolutional Network model
 def DeconvN(cfg):
