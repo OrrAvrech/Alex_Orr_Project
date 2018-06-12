@@ -4,7 +4,8 @@ from tensorflow.python.keras.optimizers import Adam
 from tensorflow.python.keras import backend as K
 
 #%% Accuracy Metrices
-def cross_corr(y_pred, y_label):
+def NCC(y_pred, y_label):
+    """Normalized Cross Correlation (tested)"""
     Npred  = (y_pred - K.mean(y_pred, [1,2], keepdims=True)) / K.std(y_pred, [1, 2], keepdims=True)
     Nlabel = (y_label - K.mean(y_label, [1,2], keepdims=True)) / K.std(y_label, [1, 2], keepdims=True)
     res = K.abs(K.mean(Npred * Nlabel, [1, 2], keepdims=True))
@@ -95,6 +96,6 @@ def DeconvN(cfg):
   # In Keras we need to compile the model so it can be trained.
   model.compile(optimizer=optimizer,
                   loss='mean_absolute_error',
-                  metrics=[cross_corr])
+                  metrics=[NCC])
   
   return model

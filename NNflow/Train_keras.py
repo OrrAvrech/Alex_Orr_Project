@@ -1,4 +1,5 @@
 from tensorflow.python.keras import backend as K
+from tensorflow.python.keras import callbacks
 # Import Models
 import Models_keras as models
 
@@ -14,21 +15,24 @@ def fit_model(cfg):
       arch_func = models.DeconvN
       model = arch_func(cfg)
       
+      callback_list = [callbacks.TensorBoard(log_dir=cfg.paths.log_dir)]
+      
       # Use Keras to train the model.
       validation_data = (dataObj.validation.features, dataObj.validation.labels)
       fitness = model.fit(x=dataObj.train.features,
                           y=dataObj.train.labels,
                           epochs=epochs,
                           batch_size=batch_size,
-                          validation_data=validation_data)
+                          validation_data=validation_data,
+                          callbacks=callback_list)
                       
       # Get the accuracy on the validation-set
       # after the last training-epoch.
-      accuracy = fitness.history['val_cross_corr'][-1]
+      accuracy = fitness.history['val_NCC'][-1]
       
       # TODO: do-if accuracy is better
       # Save the new model to harddisk.
-      model.save(cfg.paths.best_model)
+      model.save(cfg.paths.model)
       
       # Delete the Keras model with these hyper-parameters from memory.
       del model

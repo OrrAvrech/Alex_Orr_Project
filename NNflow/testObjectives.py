@@ -30,9 +30,12 @@ def check_loss(shape, tensor_objective, np_objective):
 
     out1 = K.eval(tensor_objective(K.variable(y_a), K.variable(y_b)))
     out2 = np_objective(y_a, y_b)
-    print('l2 norm of tensor_objective output:', np.linalg.norm(out1))
-    print('l2 norm of numpy_objective output:', np.linalg.norm(out2))
-    print('Euclidean distance between the two outputs:', np.linalg.norm(out1-out2))
+    dist_tensor = np.linalg.norm(out1)
+    dist_np     = np.linalg.norm(out2)
+    dist_diff   = np.linalg.norm(out1-out2)
+    print('l2 norm of tensor_objective output:', dist_tensor)
+    print('l2 norm of numpy_objective output:', dist_np)
+    print('Euclidean distance between the two outputs:', dist_diff)
 
 if __name__ == '__main__':
     # Set tested tensor shape 
