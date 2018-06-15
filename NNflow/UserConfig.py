@@ -1,4 +1,5 @@
 import os
+import Train_keras
 
 from dataset_NEWtf import load_dataset
 
@@ -6,23 +7,24 @@ def init():
     empty_node = type('', (), {})
     return empty_node
 
-def create_cfg(dataset_name, LoadObj):
+def create_cfg(dataset_name, model, run_mode):
     # Init Config Empty Nodes
     cfg = init()
     
     # FLAGS
     cfg.FLAGS = init()
-    cfg.FLAGS.LoadObj = LoadObj
+    cfg.FLAGS.LoadObj = False
 #    cfg.FLAGS.save_ckpt = False
     
     # Directories    
-    cfg.paths = init()
-    file_path = os.path.dirname(os.path.abspath(__file__))    
-    cfg.paths.dataset = os.path.join(file_path,'..','DataSimulation','Dataset_' + dataset_name)
-    cfg.paths.log_home = os.path.join(file_path,'logs',dataset_name)
-    cfg.paths.log_dir = os.path.join(file_path,'logs',dataset_name,'Experiments')
-    cfg.paths.model = 'best_model.keras'
-#    cfg.paths.graphs.base = os.path.join(file_path, 'graphs', dataset[0])  
+    cfg.paths                   = init()
+    file_path                   = os.path.dirname(os.path.abspath(__file__))    
+    cfg.paths.dataset           = os.path.join(file_path,'..','DataSimulation','Dataset_' + dataset_name)
+    cfg.paths.summaries_dataset = os.path.join(file_path, 'summaries', dataset_name)
+    cfg.paths.summaries_model   = os.path.join(cfg.paths.summaries_dataset, model)
+    cfg.paths.summaries_runBase = os.path.join(cfg.paths.summaries_model, run_mode)
+    cfg.paths.summaries_current = cfg.paths.summaries_runBase
+    cfg.paths.model             = 'best_model.keras'
 #    cfg.paths.ckpts = os.path.join(file_path, 'checkpoints', dataset[0])  
 
     # Load Data Fields
@@ -45,11 +47,11 @@ def create_cfg(dataset_name, LoadObj):
     # Current Experiment    
     cfg.exp = init()
     cfg.exp.batch = 1
-    cfg.exp.epochs = 100
+    cfg.exp.epochs = 10
     
     # Architecture Parameters
     cfg.arch = init()
-    # TODO: cfg.arch.model = model # Deconv/FC...
+    cfg.arch.model = model # Deconv/FC...
     cfg.arch.lr = 1e-3
     
     # Restore Model
@@ -59,4 +61,24 @@ def create_cfg(dataset_name, LoadObj):
     cfg.restore.model = None
     
     return cfg
+
+def config_handler(cfg, param_name, value):
+
+    if not os.path.exists(os.path.join(cfg.paths.summaries_runBase, param_name)):
+        os.makedirs(os.path.join(cfg.paths.summaries_runBase, param_name))
+    cfg.paths.summaries_current = os.path.join(cfg.paths.summaries_runBase, param_name, str(value))
+    if not os.path.exists(cfg.paths.summaries_current):
+        os.makedirs(cfg.paths.summaries_current)
+
+    if param_name == 'arch.lr':
+        cfg.arch.lr = value
+        
+#    elif param_name == 'lr':
+#    elif param_name == 'lr':    
+#    elif param_name == 'lr':    
+    return cfg
+    
+def execute_exp(cfg):
+    Train_keras.fit_model(cfg)
+
     

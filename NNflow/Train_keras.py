@@ -12,10 +12,10 @@ def fit_model(cfg):
       batch_size = cfg.exp.batch      
           
       # Create Model
-      arch_func = models.DeconvN
+      arch_func = models.DeconvN # TODO: Generalize to multiple models
       model = arch_func(cfg)
       
-      callback_list = [callbacks.TensorBoard(log_dir=cfg.paths.log_dir)]
+      callback_list = [callbacks.TensorBoard(log_dir=cfg.paths.summaries_current)]
       
       # Use Keras to train the model.
       validation_data = (dataObj.validation.features, dataObj.validation.labels)
