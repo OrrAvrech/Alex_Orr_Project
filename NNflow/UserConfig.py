@@ -57,6 +57,9 @@ def create_cfg(dataset):
     cfg.restore.flag = False
     cfg.restore.model = None
     
+    # Hyperparams
+        
+    
     return cfg
     
 
