@@ -1,32 +1,18 @@
 import tensorflow as tf
 from tensorflow.python.keras import layers
 from tensorflow.python.keras.optimizers import Adam
-# Import UserConfig
-from Main_keras import cfg
-
-#%% Global Constants (per dataset)
-maxSources = cfg.data.maxSources
-numFrames  = cfg.data.numFrames
-imgSize    = cfg.data.imgSize
-batch_size = cfg.exp.batch # TODO: should by hyperparam
-
-#%% Hyperparams
+from tensorflow.python.keras import backend as K
 
 #%% Accuracy Metrices
-def cross_corr(logits, labels):
-    for i in range(batch_size):  
-        y_conv = logits[i, 0:imgSize, 0:imgSize, 0:maxSources]
-        y_conv = tf.reshape(y_conv, [1, imgSize, imgSize, maxSources])
-        label_resh = tf.reshape(labels, [imgSize, imgSize, maxSources, -1])
-        y_ = label_resh[0:imgSize, 0:imgSize, 0:maxSources, i]
-        y_ = tf.reshape(y_, [imgSize, imgSize, maxSources, 1])
-        result = 0  
-        corr2d = tf.nn.conv2d(y_conv, y_, strides=[1, 1, 1, 1], padding='SAME')
-        result += tf.reduce_mean(corr2d)
-    return result/batch_size
+def NCC(y_pred, y_label):
+    """Normalized Cross Correlation (tested)"""
+    Npred  = (y_pred - K.mean(y_pred, [1,2], keepdims=True)) / K.std(y_pred, [1, 2], keepdims=True)
+    Nlabel = (y_label - K.mean(y_label, [1,2], keepdims=True)) / K.std(y_label, [1, 2], keepdims=True)
+    res = K.abs(K.mean(Npred * Nlabel, [1, 2], keepdims=True))
+    return K.mean(res)
 
 #%% Deconvolutional Network model
-def DeconvN():
+def DeconvN(cfg):
   """DeconvN builds the graph for a deconvolutional net for seperating emitters.
   Args:
     data_params: [imgSize, numFrames, maxSources]  
@@ -35,19 +21,24 @@ def DeconvN():
     y_conv: a tensor of shape 64 x 64 x maxSources 
   """
   
+  # Contsants (per dataset)
+  maxSources = cfg.data.maxSources
+  numFrames  = cfg.data.numFrames
+  imgSize    = cfg.data.imgSize
+  
+  # Hyperparams
+  
+  
   # Data Dimensions
   # Reshape to use within a convolutional neural net.
   # Last dimension is for "features" - it would be 1 for grayscale
-  # 3 for an RGB image, 4 for RGBA, numFrames for a movie.    
-  input_size_flat = imgSize * imgSize * numFrames
+  # 3 for an RGB image, 4 for RGBA, numFrames for a movie.   
   input_shape_full = (imgSize, imgSize, numFrames)
   
   # Start construction of a Keras Sequential model.
   model = tf.keras.Sequential()
   
-  model.add(layers.InputLayer(input_shape=(input_size_flat,)))
-  
-  model.add(layers.Reshape(input_shape_full))
+  model.add(layers.InputLayer(input_shape=(input_shape_full)))
   
   # First convolutional layer.
   # TODO: Categorial activations
@@ -101,10 +92,10 @@ def DeconvN():
   # We want to find the best learning-rate for the Adam method.
   # TODO: learning rate param
   optimizer = Adam(lr=1e-3)
-    
+  
   # In Keras we need to compile the model so it can be trained.
   model.compile(optimizer=optimizer,
                   loss='mean_absolute_error',
-                  metrics=['accuracy', cross_corr])
-    
+                  metrics=[NCC])
+  
   return model

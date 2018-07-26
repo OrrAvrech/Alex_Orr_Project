@@ -7,7 +7,7 @@ Created on Sat May  5 22:19:16 2018
 import UserConfig as user
 
 model_name = 'Deconv'
-run_mode = 'validation'
+run_mode = 'Experiment'
 dataset_name = 'im64_f8_s2'
 firstSample = 1
 numSamples = 10
