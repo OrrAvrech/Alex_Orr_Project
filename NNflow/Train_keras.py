@@ -1,16 +1,26 @@
 from tensorflow.python.keras import backend as K
 from tensorflow.python.keras import callbacks
+from skopt.utils import use_named_args
 # Import Models
 import Models_keras as models
 
 #%% Create and Fit Model
-def fit_model(cfg):
+@use_named_args(dimensions = dimensions)
+def fit_model(cfg, learning_rate, num_conv_Bulks, kernel_size, activation):
     
       # Import data
       epochs = cfg.exp.epochs
       dataObj = cfg.data.obj
-      batch_size = cfg.exp.batch      
-          
+      batch_size = cfg.exp.batch
+      
+      
+      # Print the hyper-parameters.
+      print('learning rate: {0:.1e}'.format(learning_rate))
+      print('num_conv_Bulks:', num_conv_Bulks)
+      print('kernel_size:', kernel_size)
+      print('activation:', activation)
+      print()
+      
       # Create Model
       arch_func = models.DeconvN # TODO: Generalize to multiple models
       model = arch_func(cfg)

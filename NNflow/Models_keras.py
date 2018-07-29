@@ -28,6 +28,10 @@ def DeconvN(cfg):
   
   # Hyperparams
   
+  learning_rate = cfg.learning_rate
+  num_conv_Bulks = cfg.num_dense_layers
+  kernel_size = cfg.num_dense_nodes
+  activation = cfg.activation
   
   # Data Dimensions
   # Reshape to use within a convolutional neural net.

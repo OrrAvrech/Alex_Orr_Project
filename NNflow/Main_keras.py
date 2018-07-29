@@ -3,13 +3,11 @@ import os
 import UserConfig as user
 import Train_keras as train
 
-<<<<<<< HEAD
 dataset_name = 'im64_f8_s4'
 firstSample = 1
 numSamples = 100
 LoadObj = False
 dataset_params = [dataset_name, firstSample, numSamples, LoadObj]
-=======
 import skopt
 from skopt import gp_minimize, forest_minimize
 from skopt.space import Real, Categorical, Integer
@@ -41,7 +39,8 @@ dataset_name = 'im64_f8_s2'
 # Regular   : single run with current parameters
 # Experiment: multiple run over a set of tested parameters
 # Optimize  : execute a hyperparam optimization algorithm 
-run_mode = 'Experiment'
+#run_mode = 'Experiment'
+run_mode = 'Optimize'
 
 # =============================================================================
 # Model
@@ -77,24 +76,25 @@ if run_mode == 'Experiment':
     for i in param_vals:
         user.config_handler(cfg, param_name, i)
         user.execute_exp(cfg)
->>>>>>> c6fbb066fd90946a7f868ca1f8d5dd5fb75645cb
 
 #%% Optimize
-default_parameters = [1e-5, 1, 16, 'relu']        
-dim_activation = Categorical(categories=['relu', 'linear'], name='activation')
-dim_num_conv_Bulks = Integer(low=1, high=5, name='num_conv_Bulks')
-#dim_num_conv_Layers = Integer(low=1, high=5, name='num_conv_Layers')
-dim_learning_rate = Real(low=2.3e-3, high=2.5e-3, prior='log-uniform', name='learning_rate')
-dim_kernel_size = Categorical(categories=[3, 5], name='kernel_size')
-
-<<<<<<< HEAD
-# Hyperparams
-#cfg.hyper.param = categorical (list)
-cfg.hyper.param = categorical (one_param)
-
-accuracy = train.fit_model()
-=======
-dim_batch_size = Integer(low=1, high=4, name='batch_size')
-dim_num_epochs = Integer(low=5, high=50, name='num_epochs')
-dimensions = [dim_learning_rate, dim_num_conv_layers, dim_num_dense_nodes, dim_activation]
->>>>>>> c6fbb066fd90946a7f868ca1f8d5dd5fb75645cb
+if run_mode == 'Optimize':
+    # Hyperparams
+    
+    dim_learning_rate = Real(low=2.3e-3, high=2.5e-3, prior='log-uniform', name='learning_rate')
+    dim_num_conv_Bulks = Integer(low=1, high=5, name='num_conv_Bulks')
+    #dim_num_conv_Layers = Integer(low=1, high=5, name='num_conv_Layers')
+    dim_kernel_size = Categorical(categories=[3, 5], name='kernel_size')
+    dim_activation = Categorical(categories=['relu', 'linear'], name='activation')
+    default_parameters = [1e-5, 1, 16, 'relu']
+    #cfg.hyper.param = categorical (list)
+#    cfg.hyper.param = categorical (one_param)
+#    accuracy = train.fit_model()
+#    dim_batch_size = Integer(low=1, high=4, name='batch_size') #TODO: decide if needed
+#    dim_num_epochs = Integer(low=5, high=50, name='num_epochs') #TODO: decide if needed
+    dimensions = [cfg, dim_learning_rate, dim_num_conv_Bulks, dim_kernel_size, dim_activation]
+    gp_minimize(func=train.fit_model,
+                dimensions=dimensions,
+                acq_func='EI', # Expected Improvement.
+                n_calls=40,
+                x0=default_parameters)
