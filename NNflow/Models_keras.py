@@ -12,7 +12,7 @@ def NCC(y_pred, y_label):
     return K.mean(res)
 
 #%% Deconvolutional Network model
-def DeconvN(cfg):
+def DeconvN(cfg, num_conv_Bulks, _kernel_size, _activation):
   """DeconvN builds the graph for a deconvolutional net for seperating emitters.
   Args:
     data_params: [imgSize, numFrames, maxSources]  
@@ -26,12 +26,7 @@ def DeconvN(cfg):
   numFrames  = cfg.data.numFrames
   imgSize    = cfg.data.imgSize
   
-  # Hyperparams
-  
-  learning_rate = cfg.learning_rate
-  num_conv_Bulks = cfg.num_dense_layers
-  kernel_size = cfg.num_dense_nodes
-  activation = cfg.activation
+  # Hyperparams  
   
   # Data Dimensions
   # Reshape to use within a convolutional neural net.
@@ -46,50 +41,52 @@ def DeconvN(cfg):
   
   # First convolutional layer.
   # TODO: Categorial activations
-  model.add(layers.Conv2D(kernel_size=3, strides=1, filters=32, padding='same',
-                     activation='relu', name='layer_conv1_1')) 
-  model.add(layers.Conv2D(kernel_size=3, strides=1, filters=32, padding='same',
-                     activation='relu', name='layer_conv1_2'))
-  model.add(layers.MaxPooling2D(pool_size=2, strides=2))
-  # Maps to 32x32x32 feature map
-  
-  # Second convolutional layer.
-  model.add(layers.Conv2D(kernel_size=3, strides=1, filters=64, padding='same',
-                     activation='relu', name='layer_conv2_1')) 
-  model.add(layers.Conv2D(kernel_size=3, strides=1, filters=64, padding='same',
-                     activation='relu', name='layer_conv2_2'))
-  model.add(layers.MaxPooling2D(pool_size=2, strides=2))
-  # Maps to 16x16x64 feature map
-  
-  # Third convolutional layer.
-  model.add(layers.Conv2D(kernel_size=3, strides=1, filters=128, padding='same',
-                     activation='relu', name='layer_conv3_1')) 
-  model.add(layers.Conv2D(kernel_size=3, strides=1, filters=128, padding='same',
-                     activation='relu', name='layer_conv3_2'))
-  model.add(layers.MaxPooling2D(pool_size=2, strides=2))
+  for i in range(num_conv_Bulks):
+      model.add(layers.Conv2D(kernel_size=_kernel_size, strides=1, filters=32, padding='same',
+                         activation=_activation, name='layer_conv1_1_{0}'.format(i+1))) 
+      model.add(layers.Conv2D(kernel_size=_kernel_size, strides=1, filters=32, padding='same',
+                         activation=_activation, name='layer_conv1_2_{0}'.format(i+1)))
+      model.add(layers.MaxPooling2D(pool_size=2, strides=2))
+      # Maps to 32x32x32 feature map
+      
+      # Second convolutional layer.
+      model.add(layers.Conv2D(kernel_size=_kernel_size, strides=1, filters=64, padding='same',
+                         activation=_activation, name='layer_conv2_1_{0}'.format(i+1))) 
+      model.add(layers.Conv2D(kernel_size=_kernel_size, strides=1, filters=64, padding='same',
+                         activation=_activation, name='layer_conv2_2_{0}'.format(i+1)))
+      model.add(layers.MaxPooling2D(pool_size=2, strides=2))
+      # Maps to 16x16x64 feature map
+      
+      # Third convolutional layer.
+      model.add(layers.Conv2D(kernel_size=_kernel_size, strides=1, filters=128, padding='same',
+                         activation=_activation, name='layer_conv3_1_{0}'.format(i+1))) 
+      model.add(layers.Conv2D(kernel_size=_kernel_size, strides=1, filters=128, padding='same',
+                         activation=_activation, name='layer_conv3_2_{0}'.format(i+1)))
+      model.add(layers.MaxPooling2D(pool_size=2, strides=2))
   # Maps to 8x8x128 feature map
   
   # First Deconvolutional Layer + Unpsampling
   model.add(layers.UpSampling2D((2, 2)))
-  model.add(layers.Conv2DTranspose(kernel_size=3, strides=1, filters=128, padding='same',
-                     activation='relu', name='layer_deconv1_1')) 
-  model.add(layers.Conv2DTranspose(kernel_size=3, strides=1, filters=64, padding='same',
-                     activation='relu', name='layer_deconv1_2')) 
+  model.add(layers.Conv2DTranspose(kernel_size=_kernel_size, strides=1, filters=128, padding='same',
+                     activation=_activation, name='layer_deconv1_1')) 
+  model.add(layers.Conv2DTranspose(kernel_size=_kernel_size, strides=1, filters=64, padding='same',
+                     activation=_activation, name='layer_deconv1_2')) 
   
   # Second Deconvolutional Layer + Unpsampling
   model.add(layers.UpSampling2D((2, 2)))
-  model.add(layers.Conv2DTranspose(kernel_size=3, strides=1, filters=64, padding='same',
-                     activation='relu', name='layer_deconv2_1')) 
-  model.add(layers.Conv2DTranspose(kernel_size=3, strides=1, filters=32, padding='same',
-                     activation='relu', name='layer_deconv2_2')) 
+  model.add(layers.Conv2DTranspose(kernel_size=_kernel_size, strides=1, filters=64, padding='same',
+                     activation=_activation, name='layer_deconv2_1')) 
+  model.add(layers.Conv2DTranspose(kernel_size=_kernel_size, strides=1, filters=32, padding='same',
+                     activation=_activation, name='layer_deconv2_2')) 
   
   # First Deconvolutional Layer + Unpsampling
+  #TODO: does this layer should get kernel size from outside?
   model.add(layers.UpSampling2D((2, 2)))
-  model.add(layers.Conv2DTranspose(kernel_size=3, strides=1, filters=32, padding='same',
-                     activation='relu', name='layer_deconv3_1')) 
-  model.add(layers.Conv2DTranspose(kernel_size=3, strides=1, filters=32, padding='same',
-                     activation='relu', name='layer_deconv3_2')) 
-  model.add(layers.Conv2DTranspose(kernel_size=3, strides=1, filters=maxSources, padding='same',
+  model.add(layers.Conv2DTranspose(kernel_size=_kernel_size, strides=1, filters=32, padding='same',
+                     activation=_activation, name='layer_deconv3_1')) 
+  model.add(layers.Conv2DTranspose(kernel_size=_kernel_size, strides=1, filters=32, padding='same',
+                     activation=_activation, name='layer_deconv3_2')) 
+  model.add(layers.Conv2DTranspose(kernel_size=_kernel_size, strides=1, filters=maxSources, padding='same',
                      activation='linear', name='layer_deconv3_3')) 
   
   # Use the Adam method for training the network.
