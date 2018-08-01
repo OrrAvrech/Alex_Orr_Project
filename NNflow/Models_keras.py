@@ -39,32 +39,24 @@ def DeconvN(cfg, learning_rate, num_conv_Bulks, kernel_size, activation):
   
   model.add(layers.InputLayer(input_shape=(input_shape_full)))
   
-  for i in range(1, num_conv_Bulks):
+  for i in range(num_conv_Bulks-1):
       # Convolutional Layers + MaxPooling
-      model.add(layers.Conv2D(kernel_size=kernel_size, strides=1, filters=32 * i, padding='same',
-                         activation='relu', name='layer_conv{0}_1'.format(i))) 
-      model.add(layers.Conv2D(kernel_size=kernel_size, strides=1, filters=32 * i, padding='same',
-                         activation='relu', name='layer_conv{0}_2'.format(i)))
+      model.add(layers.Conv2D(kernel_size=kernel_size, strides=1, filters=32 * 2^i, padding='same',
+                         activation='relu', name='layer_conv{0}_1'.format(i+1))) 
+      model.add(layers.Conv2D(kernel_size=kernel_size, strides=1, filters=32 * 2^i, padding='same',
+                         activation='relu', name='layer_conv{0}_2'.format(i+1)))
       model.add(layers.MaxPooling2D(pool_size=2, strides=2))
       
-  for j in range(num_conv_Bulks):
+  for j in range(num_conv_Bulks-1,0):
       # Upsampling + Deconvolutional Layers
       model.add(layers.UpSampling2D((2, 2)))
-      model.add(layers.Conv2DTranspose(kernel_size=kernel_size, strides=1, filters=32 * j, padding='same',
-                         activation='relu', name='layer_deconv{0}_1'.format(j+1))) 
-      model.add(layers.Conv2DTranspose(kernel_size=kernel_size, strides=1, filters=32 * j, padding='same',
-                         activation='relu', name='layer_deconv{0}_2'.format(j+1))) 
+      model.add(layers.Conv2DTranspose(kernel_size=kernel_size, strides=1, filters=32 * 2^j, padding='same',
+                         activation='relu', name='layer_deconv{0}_1'.format(num_conv_Bulks-j))) 
+      model.add(layers.Conv2DTranspose(kernel_size=kernel_size, strides=1, filters=32 * 2^j, padding='same',
+                         activation='relu', name='layer_deconv{0}_2'.format(num_conv_Bulks-j))) 
 
-  
-  # First Deconvolutional Layer + Unpsampling
-  #TODO: does this layer should get kernel size from outside?
-  model.add(layers.UpSampling2D((2, 2)))
-  model.add(layers.Conv2DTranspose(kernel_size=_kernel_size, strides=1, filters=32, padding='same',
-                     activation=_activation, name='layer_deconv3_1')) 
-  model.add(layers.Conv2DTranspose(kernel_size=_kernel_size, strides=1, filters=32, padding='same',
-                     activation=_activation, name='layer_deconv3_2')) 
-  model.add(layers.Conv2DTranspose(kernel_size=_kernel_size, strides=1, filters=maxSources, padding='same',
-                     activation='linear', name='layer_deconv3_3')) 
+  model.add(layers.Conv2DTranspose(kernel_size=kernel_size, strides=1, filters=maxSources, padding='same',
+                     activation=activation, name='layer_deconv_output')) 
   
   # Use the Adam method for training the network.
   # We want to find the best learning-rate for the Adam method.
