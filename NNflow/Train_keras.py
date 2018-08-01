@@ -1,11 +1,9 @@
 from tensorflow.python.keras import backend as K
 from tensorflow.python.keras import callbacks
-from skopt.utils import use_named_args
 # Import Models
 import Models_keras as models
 
 #%% Create and Fit Model
-@use_named_args(dimensions = dimensions)
 def fit_model(cfg, learning_rate, num_conv_Bulks, kernel_size, activation):
     
       # Import data
@@ -27,7 +25,7 @@ def fit_model(cfg, learning_rate, num_conv_Bulks, kernel_size, activation):
       
       # Create Model
       arch_func = models.DeconvN # TODO: Generalize to multiple models
-      model = arch_func(cfg, num_conv_Bulks, kernel_size, activation)
+      model = arch_func(cfg, learning_rate, num_conv_Bulks, kernel_size, activation)
       
       callback_list = [callbacks.TensorBoard(log_dir=cfg.paths.summaries_current)]
       

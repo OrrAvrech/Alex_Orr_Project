@@ -12,7 +12,7 @@ def NCC(y_pred, y_label):
     return K.mean(res)
 
 #%% Deconvolutional Network model
-def DeconvN(cfg, num_conv_Bulks, _kernel_size, _activation):
+def DeconvN(cfg, learning_rate, num_conv_Bulks, kernel_size, activation):
   """DeconvN builds the graph for a deconvolutional net for seperating emitters.
   Args:
     data_params: [imgSize, numFrames, maxSources]  
@@ -39,45 +39,22 @@ def DeconvN(cfg, num_conv_Bulks, _kernel_size, _activation):
   
   model.add(layers.InputLayer(input_shape=(input_shape_full)))
   
-  # First convolutional layer.
-  # TODO: Categorial activations
-  for i in range(num_conv_Bulks):
-      model.add(layers.Conv2D(kernel_size=_kernel_size, strides=1, filters=32, padding='same',
-                         activation=_activation, name='layer_conv1_1_{0}'.format(i+1))) 
-      model.add(layers.Conv2D(kernel_size=_kernel_size, strides=1, filters=32, padding='same',
-                         activation=_activation, name='layer_conv1_2_{0}'.format(i+1)))
+  for i in range(1, num_conv_Bulks):
+      # Convolutional Layers + MaxPooling
+      model.add(layers.Conv2D(kernel_size=kernel_size, strides=1, filters=32 * i, padding='same',
+                         activation='relu', name='layer_conv{0}_1'.format(i))) 
+      model.add(layers.Conv2D(kernel_size=kernel_size, strides=1, filters=32 * i, padding='same',
+                         activation='relu', name='layer_conv{0}_2'.format(i)))
       model.add(layers.MaxPooling2D(pool_size=2, strides=2))
-      # Maps to 32x32x32 feature map
       
-      # Second convolutional layer.
-      model.add(layers.Conv2D(kernel_size=_kernel_size, strides=1, filters=64, padding='same',
-                         activation=_activation, name='layer_conv2_1_{0}'.format(i+1))) 
-      model.add(layers.Conv2D(kernel_size=_kernel_size, strides=1, filters=64, padding='same',
-                         activation=_activation, name='layer_conv2_2_{0}'.format(i+1)))
-      model.add(layers.MaxPooling2D(pool_size=2, strides=2))
-      # Maps to 16x16x64 feature map
-      
-      # Third convolutional layer.
-      model.add(layers.Conv2D(kernel_size=_kernel_size, strides=1, filters=128, padding='same',
-                         activation=_activation, name='layer_conv3_1_{0}'.format(i+1))) 
-      model.add(layers.Conv2D(kernel_size=_kernel_size, strides=1, filters=128, padding='same',
-                         activation=_activation, name='layer_conv3_2_{0}'.format(i+1)))
-      model.add(layers.MaxPooling2D(pool_size=2, strides=2))
-  # Maps to 8x8x128 feature map
-  
-  # First Deconvolutional Layer + Unpsampling
-  model.add(layers.UpSampling2D((2, 2)))
-  model.add(layers.Conv2DTranspose(kernel_size=_kernel_size, strides=1, filters=128, padding='same',
-                     activation=_activation, name='layer_deconv1_1')) 
-  model.add(layers.Conv2DTranspose(kernel_size=_kernel_size, strides=1, filters=64, padding='same',
-                     activation=_activation, name='layer_deconv1_2')) 
-  
-  # Second Deconvolutional Layer + Unpsampling
-  model.add(layers.UpSampling2D((2, 2)))
-  model.add(layers.Conv2DTranspose(kernel_size=_kernel_size, strides=1, filters=64, padding='same',
-                     activation=_activation, name='layer_deconv2_1')) 
-  model.add(layers.Conv2DTranspose(kernel_size=_kernel_size, strides=1, filters=32, padding='same',
-                     activation=_activation, name='layer_deconv2_2')) 
+  for j in range(num_conv_Bulks):
+      # Upsampling + Deconvolutional Layers
+      model.add(layers.UpSampling2D((2, 2)))
+      model.add(layers.Conv2DTranspose(kernel_size=kernel_size, strides=1, filters=32 * j, padding='same',
+                         activation='relu', name='layer_deconv{0}_1'.format(j+1))) 
+      model.add(layers.Conv2DTranspose(kernel_size=kernel_size, strides=1, filters=32 * j, padding='same',
+                         activation='relu', name='layer_deconv{0}_2'.format(j+1))) 
+
   
   # First Deconvolutional Layer + Unpsampling
   #TODO: does this layer should get kernel size from outside?
@@ -92,7 +69,7 @@ def DeconvN(cfg, num_conv_Bulks, _kernel_size, _activation):
   # Use the Adam method for training the network.
   # We want to find the best learning-rate for the Adam method.
   # TODO: learning rate param
-  optimizer = Adam(lr=1e-3)
+  optimizer = Adam(lr=learning_rate)
   
   # In Keras we need to compile the model so it can be trained.
   model.compile(optimizer=optimizer,
