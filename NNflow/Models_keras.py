@@ -39,7 +39,7 @@ def DeconvN(cfg, learning_rate, num_conv_Bulks, kernel_size, activation):
   
   model.add(layers.InputLayer(input_shape=(input_shape_full)))
   
-  for i in range(num_conv_Bulks-1):
+  for i in range(num_conv_Bulks):
       # Convolutional Layers + MaxPooling
       model.add(layers.Conv2D(kernel_size=kernel_size, strides=1, filters=32 * 2^i, padding='same',
                          activation='relu', name='layer_conv{0}_1'.format(i+1))) 
@@ -47,7 +47,8 @@ def DeconvN(cfg, learning_rate, num_conv_Bulks, kernel_size, activation):
                          activation='relu', name='layer_conv{0}_2'.format(i+1)))
       model.add(layers.MaxPooling2D(pool_size=2, strides=2))
       
-  for j in range(num_conv_Bulks-1,0):
+  for j in range(num_conv_Bulks-1,-1,-1):
+      print ("deconv"+str(j))
       # Upsampling + Deconvolutional Layers
       model.add(layers.UpSampling2D((2, 2)))
       model.add(layers.Conv2DTranspose(kernel_size=kernel_size, strides=1, filters=32 * 2^j, padding='same',

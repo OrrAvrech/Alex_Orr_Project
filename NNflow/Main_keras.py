@@ -5,12 +5,14 @@ from skopt.utils import use_named_args
 import UserConfig as user
 import Train_keras as train
 
+
 #%% Create Configuration Object
     
 # =============================================================================
 # Dataset used for training and evaluation: dataset_name
 # =============================================================================
 dataset_name = 'im64_f8_s2'
+
 
 # =============================================================================
 # Run Mode
@@ -34,14 +36,14 @@ model = 'DeconvN'
 #               debugging   
 # True - Usage:
 #               fast loading of the entire dataset
-#LoadObj = False
+
 
 cfg = user.create_cfg(dataset_name, model, run_mode)
 # if LoadObj is False -  denote the range of files to load (or leave as default):
 #cfg.load.first_sample = 1  # (default = 1)
-#cfg.load.numSamples   = 15 # (default = 15)
+#cfg.load.numSamples   = 5000 # (default = 15)
 cfg.exp.batch         = 2  # (default = 1)   
-#cfg.exp.epochs        = 10 # (default = 10)
+cfg.exp.epochs        = 5 # (default = 10)
 
 #%% Regular
 if run_mode == 'Regular':    
@@ -63,20 +65,21 @@ if run_mode == 'Optimize':
     dim_num_conv_Bulks = Integer(low=1, high=5, name='num_conv_Bulks')
     dim_kernel_size = Categorical(categories=[3, 5], name='kernel_size')
     dim_activation = Categorical(categories=['relu', 'linear'], name='activation')
+    dim_cfg = Categorical(categories=[cfg], name='cfg')
     default_parameters = [cfg, 2.5e-3, 1, 3, 'relu']
+    
 #    dim_batch_size = Integer(low=1, high=4, name='batch_size') #TODO: decide if needed
 #    dim_num_epochs = Integer(low=5, high=50, name='num_epochs') #TODO: decide if needed
     
-    dimensions = [cfg, dim_learning_rate, dim_num_conv_Bulks, dim_kernel_size, dim_activation]
+    dimensions = [dim_cfg, dim_learning_rate, dim_num_conv_Bulks, dim_kernel_size, dim_activation]
     
     @use_named_args(dimensions = dimensions)
     def train_wrapper(cfg, learning_rate, num_conv_Bulks, kernel_size, activation):
-        train.fit_model(cfg, learning_rate, num_conv_Bulks, kernel_size, activation)
+        return train.fit_model(cfg, learning_rate, num_conv_Bulks, kernel_size, activation)
     
-    gp_minimize(func=train_wrapper,
-                dimensions=dimensions,
-                acq_func='EI', # Expected Improvement.
-                n_calls=40,
-                x0=default_parameters)
-    
-
+    search_result = gp_minimize(func=train_wrapper,
+                                dimensions=dimensions,
+                                acq_func='EI', # Expected Improvement.
+                                n_calls=11,
+                                x0=default_parameters)
+    print(search_result)

@@ -30,7 +30,7 @@ def create_cfg(dataset_name, model, run_mode):
     # Load Data Fields
     cfg.load = init()
     cfg.load.first_sample = 1
-    cfg.load.numSamples = 15
+    cfg.load.numSamples = 5000
     
     # Data Fields
     dataObj, imgSize, numFrames, maxSources = load_dataset(cfg.load.first_sample, 
