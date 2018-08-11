@@ -43,8 +43,10 @@ def DeconvN(cfg, learning_rate, num_conv_Bulks, kernel_size, activation):
       # Convolutional Layers + MaxPooling
       model.add(layers.Conv2D(kernel_size=kernel_size, strides=1, filters=32 * 2^i, padding='same',
                          activation='relu', name='layer_conv{0}_1'.format(i+1))) 
+      model.add(layers.BatchNormalization())
       model.add(layers.Conv2D(kernel_size=kernel_size, strides=1, filters=32 * 2^i, padding='same',
                          activation='relu', name='layer_conv{0}_2'.format(i+1)))
+      model.add(layers.BatchNormalization())
       model.add(layers.MaxPooling2D(pool_size=2, strides=2))
       
   for j in range(num_conv_Bulks-1,-1,-1):
@@ -53,11 +55,14 @@ def DeconvN(cfg, learning_rate, num_conv_Bulks, kernel_size, activation):
       model.add(layers.UpSampling2D((2, 2)))
       model.add(layers.Conv2DTranspose(kernel_size=kernel_size, strides=1, filters=32 * 2^j, padding='same',
                          activation='relu', name='layer_deconv{0}_1'.format(num_conv_Bulks-j))) 
+      model.add(layers.BatchNormalization())
       model.add(layers.Conv2DTranspose(kernel_size=kernel_size, strides=1, filters=32 * 2^j, padding='same',
                          activation='relu', name='layer_deconv{0}_2'.format(num_conv_Bulks-j))) 
+      model.add(layers.BatchNormalization())
 
   model.add(layers.Conv2DTranspose(kernel_size=kernel_size, strides=1, filters=maxSources, padding='same',
                      activation=activation, name='layer_deconv_output')) 
+  model.add(layers.BatchNormalization())
   
   # Use the Adam method for training the network.
   # We want to find the best learning-rate for the Adam method.
