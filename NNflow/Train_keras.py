@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import pickle
 
 from tensorflow.python.keras import backend as K
 from tensorflow.python.keras import callbacks
@@ -8,7 +9,7 @@ import Models_keras as models
 
 #%% Create and Fit Model
 # best_accuracy = 0.0
-best_accuracy = 10**100000000
+best_accuracy = 10**10
 call_num = 1
 def fit_model(cfg, learning_rate, num_conv_Bulks, kernel_size, activation):
    
@@ -16,6 +17,8 @@ def fit_model(cfg, learning_rate, num_conv_Bulks, kernel_size, activation):
       epochs = cfg.exp.epochs
       dataObj = cfg.data.obj
       batch_size = cfg.exp.batch
+      data_params = [cfg.data.imgSize, cfg.data.numFrames, cfg.data.maxSources]
+      
 #      epochs = 10
 #      dataObj = cfg.data.obj
 #      batch_size = 2
@@ -38,7 +41,7 @@ def fit_model(cfg, learning_rate, num_conv_Bulks, kernel_size, activation):
       
       # Create Model
       arch_func = models.DeconvN # TODO: Generalize to multiple models
-      model = arch_func(cfg)
+      model = arch_func(data_params, learning_rate, num_conv_Bulks, kernel_size, activation)
       
       callback_list = [callbacks.TensorBoard(log_dir=cfg.paths.summaries_current)]
       
@@ -74,7 +77,15 @@ def fit_model(cfg, learning_rate, num_conv_Bulks, kernel_size, activation):
           # Save the new model to harddisk.
           if not os.path.exists(cfg.paths.best_models):
               os.makedirs(cfg.paths.best_models)
-          model.save(cfg.paths.model)
+          print("Best params so far:")
+          hyper_params = {'data_params':data_params, 'learning_rate':learning_rate, 'num_conv_Bulks':num_conv_Bulks, 'kernel_size':kernel_size, 'activation':activation}
+          print(hyper_params)
+          params_File = open(os.path.join(cfg.paths.best_models, 'hyp_opt.obj'), 'wb') # in Windows use 'w'/'r' only for text files
+          pickle.dump(hyper_params , params_File, protocol=4)
+          # serialize weights to HDF5
+          model.save_weights(cfg.paths.model_weights)
+          print("Saved model to disk")
+#          model.save(cfg.paths.model)
           
           # Update the classification accuracy.
           best_accuracy = accuracy
