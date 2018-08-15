@@ -1,32 +1,24 @@
-import os
+#import os
+#os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+#os.environ["CUDA_VISIBLE_DEVICES"]="0"
+
+from skopt import gp_minimize
+from skopt.space import Real, Categorical, Integer
+from skopt.utils import use_named_args
 
 import UserConfig as user
 import Train_keras as train
-
-#import skopt
-#from skopt import gp_minimize, forest_minimize
-#from skopt.space import Real, Categorical, Integer
-#from skopt.plots import plot_convergence
-#from skopt.plots import plot_objective, plot_evaluations
-#from skopt.plots import plot_histogram, plot_objective_2D
-#from skopt.utils import use_named_args
+from dataset_NEWtf import load_dataset
 
 #%% Create Configuration Object
-
-#def log_dir_name(isExperiment, dir_name):
-#
-#    # The dir-name for the TensorBoard log-dir.
-#    if isExperiment == True:
-#        log_dir = os.path.join('Experiments', dir_name)
-#    else:
-#        log_dir = os.path.join('Optimized', dir_name)
-#        
-#    return log_dir
     
 # =============================================================================
-# Dataset used for training and evaluation: dataset_name
+# Dataset parameters used for training and evaluation: dataset_params
 # =============================================================================
-dataset_name = 'im64_f8_s2'
+imgSize = 64
+numFrames = 64
+maxSources = 32
+dataset_params = [imgSize, numFrames, maxSources]
 
 # =============================================================================
 # Run Mode
@@ -41,27 +33,27 @@ run_mode = 'Regular'
 # =============================================================================
 model = 'DeconvN'
 
-# =============================================================================
-# Loading a data object from the given dataset: Load Obj
-# =============================================================================
-# False - Usage:
-#               data objects do not exist 
-#               testing code
-#               debugging   
-# True - Usage:
-#               fast loading of the entire dataset
-#LoadObj = False
+#==============================================================================
+# Data
+#==============================================================================
+cfg = user.create_cfg(dataset_params, model, run_mode)
+cfg.load.first_sample = 1  # (default = 1) #not needed if Loadobj=True
+cfg.load.numSamples   = 15# (default = 15) #not needed if Loadobj=True
+LoadObj = True
+SaveObj = False
 
-cfg = user.create_cfg(dataset_name, model, run_mode)
-# if LoadObj is False -  denote the range of files to load (or leave as default):
-#cfg.load.first_sample = 1  # (default = 1)
-#cfg.load.numSamples   = 15 # (default = 15)
-cfg.exp.batch         = 2  # (default = 1)   
-#cfg.exp.epochs        = 10 # (default = 10)
+cfg.data.obj,_,_,_ =  load_dataset(cfg.load.first_sample, cfg.load.numSamples, cfg.paths.dataset, LoadObj, SaveObj)
+
+cfg.exp.batch         = 20  # (default = 1)
+cfg.exp.epochs        = 30 # (default = 10)
 
 #%% Regular
 if run_mode == 'Regular':    
-    accuracy = train.fit_model(cfg)
+    learning_rate = 2e-3
+    num_conv_Bulks = 3
+    kernel_size = 3
+    activation = 'relu'
+    accuracy = train.fit_model(cfg, learning_rate, num_conv_Bulks, kernel_size, activation)
 
 #%% Experiments
 if run_mode == 'Experiment':
@@ -73,13 +65,30 @@ if run_mode == 'Experiment':
 
 #%% Optimize
 if run_mode == 'Optimize':
-    default_parameters = [1e-5, 1, 16, 'relu']        
-    dim_activation = Categorical(categories=['relu', 'linear'], name='activation')
+
+    # Hyperparams    
+    dim_learning_rate = Real(low=1e-6, high=1e-2, prior='log-uniform', name='learning_rate')
     dim_num_conv_Bulks = Integer(low=1, high=5, name='num_conv_Bulks')
-    #dim_num_conv_Layers = Integer(low=1, high=5, name='num_conv_Layers')
+    dim_num_conv_Layers = Integer(low=1, high=5, name='num_conv_Layers')
     dim_learning_rate = Real(low=2.3e-3, high=2.5e-3, prior='log-uniform', name='learning_rate')
     dim_kernel_size = Categorical(categories=[3, 5], name='kernel_size')
+
+    dim_activation = Categorical(categories=['sigmoid', 'linear', 'relu'], name='activation')
+    dim_cfg = Categorical(categories=[cfg], name='cfg')
+    default_parameters = [cfg, 2e-3, 1, 3, 'sigmoid']
     
-    dim_batch_size = Integer(low=1, high=4, name='batch_size')
-    dim_num_epochs = Integer(low=5, high=50, name='num_epochs')
-    dimensions = [dim_learning_rate, dim_num_conv_layers, dim_num_dense_nodes, dim_activation]
+#    dim_batch_size = Integer(low=1, high=4, name='batch_size') #TODO: decide if needed
+#    dim_num_epochs = Integer(low=5, high=50, name='num_epochs') #TODO: decide if needed
+    
+    dimensions = [dim_cfg, dim_learning_rate, dim_num_conv_Bulks, dim_kernel_size, dim_activation]
+    
+    @use_named_args(dimensions = dimensions)
+    def train_wrapper(cfg, learning_rate, num_conv_Bulks, kernel_size, activation):
+        return train.fit_model(cfg, learning_rate, num_conv_Bulks, kernel_size, activation)
+    
+    search_result = gp_minimize(func=train_wrapper,
+                                dimensions=dimensions,
+                                acq_func='EI', # Expected Improvement.
+                                n_calls=56,
+                                x0=default_parameters)
+

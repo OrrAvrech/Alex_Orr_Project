@@ -6,13 +6,13 @@ from tensorflow.python.keras import backend as K
 #%% Accuracy Metrices
 def NCC(y_pred, y_label):
     """Normalized Cross Correlation (tested)"""
-    Npred  = (y_pred - K.mean(y_pred, [1,2], keepdims=True)) / K.std(y_pred, [1, 2], keepdims=True)
-    Nlabel = (y_label - K.mean(y_label, [1,2], keepdims=True)) / K.std(y_label, [1, 2], keepdims=True)
+    Npred  = (y_pred - K.mean(y_pred, [1,2], keepdims=True)) #/ K.std(y_pred, [1, 2], keepdims=True)
+    Nlabel = (y_label - K.mean(y_label, [1,2], keepdims=True))# / K.std(y_label, [1, 2], keepdims=True)
     res = K.abs(K.mean(Npred * Nlabel, [1, 2], keepdims=True))
     return K.mean(res)
 
 #%% Deconvolutional Network model
-def DeconvN(cfg):
+def DeconvN(cfg, learning_rate, num_conv_Bulks, kernel_size, activation):
   """DeconvN builds the graph for a deconvolutional net for seperating emitters.
   Args:
     data_params: [imgSize, numFrames, maxSources]  
@@ -40,53 +40,24 @@ def DeconvN(cfg):
   
   model.add(layers.InputLayer(input_shape=(input_shape_full)))
   
-  # First convolutional layer.
-  # TODO: Categorial activations
-  model.add(layers.Conv2D(kernel_size=3, strides=1, filters=32, padding='same',
-                     activation='relu', name='layer_conv1_1')) 
-  model.add(layers.Conv2D(kernel_size=3, strides=1, filters=32, padding='same',
-                     activation='relu', name='layer_conv1_2'))
-  model.add(layers.MaxPooling2D(pool_size=2, strides=2))
-  # Maps to 32x32x32 feature map
-  
-  # Second convolutional layer.
-  model.add(layers.Conv2D(kernel_size=3, strides=1, filters=64, padding='same',
-                     activation='relu', name='layer_conv2_1')) 
-  model.add(layers.Conv2D(kernel_size=3, strides=1, filters=64, padding='same',
-                     activation='relu', name='layer_conv2_2'))
-  model.add(layers.MaxPooling2D(pool_size=2, strides=2))
-  # Maps to 16x16x64 feature map
-  
-  # Third convolutional layer.
-  model.add(layers.Conv2D(kernel_size=3, strides=1, filters=128, padding='same',
-                     activation='relu', name='layer_conv3_1')) 
-  model.add(layers.Conv2D(kernel_size=3, strides=1, filters=128, padding='same',
-                     activation='relu', name='layer_conv3_2'))
-  model.add(layers.MaxPooling2D(pool_size=2, strides=2))
-  # Maps to 8x8x128 feature map
-  
-  # First Deconvolutional Layer + Unpsampling
-  model.add(layers.UpSampling2D((2, 2)))
-  model.add(layers.Conv2DTranspose(kernel_size=3, strides=1, filters=128, padding='same',
-                     activation='relu', name='layer_deconv1_1')) 
-  model.add(layers.Conv2DTranspose(kernel_size=3, strides=1, filters=64, padding='same',
-                     activation='relu', name='layer_deconv1_2')) 
-  
-  # Second Deconvolutional Layer + Unpsampling
-  model.add(layers.UpSampling2D((2, 2)))
-  model.add(layers.Conv2DTranspose(kernel_size=3, strides=1, filters=64, padding='same',
-                     activation='relu', name='layer_deconv2_1')) 
-  model.add(layers.Conv2DTranspose(kernel_size=3, strides=1, filters=32, padding='same',
-                     activation='relu', name='layer_deconv2_2')) 
-  
-  # First Deconvolutional Layer + Unpsampling
-  model.add(layers.UpSampling2D((2, 2)))
-  model.add(layers.Conv2DTranspose(kernel_size=3, strides=1, filters=32, padding='same',
-                     activation='relu', name='layer_deconv3_1')) 
-  model.add(layers.Conv2DTranspose(kernel_size=3, strides=1, filters=32, padding='same',
-                     activation='relu', name='layer_deconv3_2')) 
-  model.add(layers.Conv2DTranspose(kernel_size=3, strides=1, filters=maxSources, padding='same',
-                     activation='linear', name='layer_deconv3_3')) 
+  for i in range(num_conv_Bulks):
+      # Convolutional Layers + MaxPooling
+      model.add(layers.Conv2D(kernel_size=kernel_size, strides=1, filters=32 * 2^i, padding='same',
+                         activation=activation, name='layer_conv{0}_1'.format(i+1))) 
+      model.add(layers.Conv2D(kernel_size=kernel_size, strides=1, filters=32 * 2^i, padding='same',
+                         activation=activation, name='layer_conv{0}_2'.format(i+1)))
+      model.add(layers.MaxPooling2D(pool_size=2, strides=2))
+      
+  for j in range(num_conv_Bulks-1,-1,-1):
+      # Upsampling + Deconvolutional Layers
+      model.add(layers.UpSampling2D((2, 2)))
+      model.add(layers.Conv2DTranspose(kernel_size=kernel_size, strides=1, filters=32 * 2^j, padding='same',
+                         activation=activation, name='layer_deconv{0}_1'.format(num_conv_Bulks-j))) 
+      model.add(layers.Conv2DTranspose(kernel_size=kernel_size, strides=1, filters=32 * 2^j, padding='same',
+                         activation=activation, name='layer_deconv{0}_2'.format(num_conv_Bulks-j))) 
+
+  model.add(layers.Conv2DTranspose(kernel_size=kernel_size, strides=1, filters=maxSources, padding='same',
+                     activation=activation, name='layer_deconv_output')) 
   
   # Use the Adam method for training the network.
   # We want to find the best learning-rate for the Adam method.
@@ -96,6 +67,6 @@ def DeconvN(cfg):
   # In Keras we need to compile the model so it can be trained.
   model.compile(optimizer=optimizer,
                   loss='mean_absolute_error',
-                  metrics=[NCC])
+                  metrics=['mae'])
   
   return model

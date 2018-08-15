@@ -18,7 +18,7 @@ def datasetFromMat(path, start_idx, end_idx, test_perc):
     
     for i in range(start_idx, end_idx):
         if i % np.floor((end_idx-start_idx)/10) == 0: 
-            print ("loaded %d/%d samples" % (i-start_idx, (end_idx-start_idx)))
+            print ("loaded %d/%d samples" % (i-start_idx+1, (end_idx-start_idx)))
             
         data_file = os.path.join(path, str(i)+ '.mat')
         with h5py.File(data_file, 'r') as f:
@@ -135,7 +135,7 @@ def read_data_sets(path, start_idx, end_idx, loadObj, saveObj2file):
   if loadObj == True:
       with open(os.path.join(path, 'train' + '.obj'), 'rb') as trainFile:
         train = pickle.load(trainFile)
-        imgSize = train.labels.shape[0]
+        imgSize = train.labels.shape[1]
         maxSources = train.labels.shape[-1]
         numFrames = train.features.shape[-1]
       with open(os.path.join(path, 'validation' + '.obj'), 'rb') as validationFile:
@@ -164,16 +164,16 @@ def read_data_sets(path, start_idx, end_idx, loadObj, saveObj2file):
       # Saving dataObj to a file (for reusing it later on)
       if saveObj2file == True:
           trainFile = open(os.path.join(path, 'train.obj'), 'wb') # in Windows use 'w'/'r' only for text files
-          pickle.dump(train, trainFile)
+          pickle.dump(train, trainFile, protocol=4)
           validationFile = open(os.path.join(path, 'validation.obj'), 'wb')
-          pickle.dump(validation, validationFile)
+          pickle.dump(validation, validationFile, protocol=4)
           testFile = open(os.path.join(path, 'test.obj'), 'wb')
-          pickle.dump(test, testFile)
+          pickle.dump(test, testFile, protocol=4)
     
-      dataObj = type('', (), {})()
-      dataObj.train = train
-      dataObj.validation = validation
-      dataObj.test = test
+  dataObj = type('', (), {})()
+  dataObj.train = train
+  dataObj.validation = validation
+  dataObj.test = test
   
   return dataObj, imgSize, numFrames, maxSources
 
