@@ -1,48 +1,46 @@
 import os
 import Train_keras
 
-from dataset_NEWtf import load_dataset
-
 def init():
     empty_node = type('', (), {})
     return empty_node
 
-def create_cfg(dataset_name, model, run_mode):
+def create_cfg(dataset_params, model, run_mode):
     # Init Config Empty Nodes
     cfg = init()
     
     # FLAGS
     cfg.FLAGS = init()
-    cfg.FLAGS.LoadObj = False
-#    cfg.FLAGS.save_ckpt = False
+    
+    # Data Fields
+    cfg.data = init()
+    cfg.data.maxSources = dataset_params[2]
+    cfg.data.numFrames= dataset_params[1]
+    cfg.data.imgSize = dataset_params[0]
+    cfg.data.name = 'im'+str(dataset_params[0])+'_f'+str(dataset_params[1])+'_s'+str(dataset_params[2])
     
     # Directories    
     cfg.paths                   = init()
     file_path                   = os.path.dirname(os.path.abspath(__file__))    
-    cfg.paths.dataset           = os.path.join(file_path,'..','DataSimulation','Dataset_' + dataset_name)
-    cfg.paths.summaries_dataset = os.path.join(file_path, 'summaries', dataset_name)
+    cfg.paths.dataset           = os.path.join(file_path,'..','DataSimulation','Dataset_' + cfg.data.name)
+    cfg.paths.best_models       = os.path.join(file_path,'best_models', cfg.data.name)
+    cfg.paths.summaries_dataset = os.path.join(file_path, 'summaries', cfg.data.name)
     cfg.paths.summaries_model   = os.path.join(cfg.paths.summaries_dataset, model)
     cfg.paths.summaries_runBase = os.path.join(cfg.paths.summaries_model, run_mode)
     cfg.paths.summaries_current = cfg.paths.summaries_runBase
-    cfg.paths.model             = 'best_model.keras'
-#    cfg.paths.ckpts = os.path.join(file_path, 'checkpoints', dataset[0])  
+    cfg.paths.model             = os.path.join(cfg.paths.best_models, 'best_model.keras')
 
     # Load Data Fields
     cfg.load = init()
     cfg.load.first_sample = 1
-    cfg.load.numSamples = 5000
+    cfg.load.numSamples = 15
     
-    # Data Fields
-    dataObj, imgSize, numFrames, maxSources = load_dataset(cfg.load.first_sample, 
-                                                           cfg.load.numSamples, 
-                                                           cfg.paths.dataset, 
-                                                           cfg.FLAGS.LoadObj)
-    cfg.data = init()
-    cfg.data.name = dataset_name
-    cfg.data.maxSources = maxSources
-    cfg.data.numFrames= numFrames
-    cfg.data.imgSize = imgSize
-    cfg.data.obj = dataObj
+#    dataObj, imgSize, numFrames, maxSources = load_dataset(cfg.load.first_sample, 
+#                                                           cfg.load.numSamples, 
+#                                                           cfg.paths.dataset, 
+#                                                           cfg.FLAGS.LoadObj)
+#    cfg.data.obj = dataObj
+    
     
     # Current Experiment    
     cfg.exp = init()
@@ -55,10 +53,10 @@ def create_cfg(dataset_name, model, run_mode):
     cfg.arch.lr = 1e-3
     
     # Restore Model
-    cfg.restore = init()
-    cfg.restore.mode = 'last'
-    cfg.restore.flag = False
-    cfg.restore.model = None
+#    cfg.restore = init()
+#    cfg.restore.mode = 'last'
+#    cfg.restore.flag = False
+#    cfg.restore.model = None
     
     # Hyperparams
         

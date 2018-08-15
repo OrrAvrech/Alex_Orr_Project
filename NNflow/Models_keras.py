@@ -6,8 +6,8 @@ from tensorflow.python.keras import backend as K
 #%% Accuracy Metrices
 def NCC(y_pred, y_label):
     """Normalized Cross Correlation (tested)"""
-    Npred  = (y_pred - K.mean(y_pred, [1,2], keepdims=True)) / K.std(y_pred, [1, 2], keepdims=True)
-    Nlabel = (y_label - K.mean(y_label, [1,2], keepdims=True)) / K.std(y_label, [1, 2], keepdims=True)
+    Npred  = (y_pred - K.mean(y_pred, [1,2], keepdims=True)) #/ K.std(y_pred, [1, 2], keepdims=True)
+    Nlabel = (y_label - K.mean(y_label, [1,2], keepdims=True))# / K.std(y_label, [1, 2], keepdims=True)
     res = K.abs(K.mean(Npred * Nlabel, [1, 2], keepdims=True))
     return K.mean(res)
 
@@ -42,19 +42,18 @@ def DeconvN(cfg, learning_rate, num_conv_Bulks, kernel_size, activation):
   for i in range(num_conv_Bulks):
       # Convolutional Layers + MaxPooling
       model.add(layers.Conv2D(kernel_size=kernel_size, strides=1, filters=32 * 2^i, padding='same',
-                         activation='relu', name='layer_conv{0}_1'.format(i+1))) 
+                         activation=activation, name='layer_conv{0}_1'.format(i+1))) 
       model.add(layers.Conv2D(kernel_size=kernel_size, strides=1, filters=32 * 2^i, padding='same',
-                         activation='relu', name='layer_conv{0}_2'.format(i+1)))
+                         activation=activation, name='layer_conv{0}_2'.format(i+1)))
       model.add(layers.MaxPooling2D(pool_size=2, strides=2))
       
   for j in range(num_conv_Bulks-1,-1,-1):
-      print ("deconv"+str(j))
       # Upsampling + Deconvolutional Layers
       model.add(layers.UpSampling2D((2, 2)))
       model.add(layers.Conv2DTranspose(kernel_size=kernel_size, strides=1, filters=32 * 2^j, padding='same',
-                         activation='relu', name='layer_deconv{0}_1'.format(num_conv_Bulks-j))) 
+                         activation=activation, name='layer_deconv{0}_1'.format(num_conv_Bulks-j))) 
       model.add(layers.Conv2DTranspose(kernel_size=kernel_size, strides=1, filters=32 * 2^j, padding='same',
-                         activation='relu', name='layer_deconv{0}_2'.format(num_conv_Bulks-j))) 
+                         activation=activation, name='layer_deconv{0}_2'.format(num_conv_Bulks-j))) 
 
   model.add(layers.Conv2DTranspose(kernel_size=kernel_size, strides=1, filters=maxSources, padding='same',
                      activation=activation, name='layer_deconv_output')) 
@@ -67,6 +66,6 @@ def DeconvN(cfg, learning_rate, num_conv_Bulks, kernel_size, activation):
   # In Keras we need to compile the model so it can be trained.
   model.compile(optimizer=optimizer,
                   loss='mean_absolute_error',
-                  metrics=[NCC])
+                  metrics=['mae'])
   
   return model
