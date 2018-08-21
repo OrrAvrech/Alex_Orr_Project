@@ -12,7 +12,7 @@ def NCC(y_pred, y_label):
     return K.mean(res)
 
 #%% Deconvolutional Network model
-def DeconvN(cfg, learning_rate, num_conv_Bulks, kernel_size, activation):
+def DeconvN(data_params, learning_rate, num_conv_Bulks, kernel_size, activation):
   """DeconvN builds the graph for a deconvolutional net for seperating emitters.
   Args:
     data_params: [imgSize, numFrames, maxSources]  
@@ -22,9 +22,9 @@ def DeconvN(cfg, learning_rate, num_conv_Bulks, kernel_size, activation):
   """
   
   # Contsants (per dataset)
-  maxSources = cfg.data.maxSources
-  numFrames  = cfg.data.numFrames
-  imgSize    = cfg.data.imgSize
+  maxSources = data_params[2]
+  numFrames  = data_params[1]
+  imgSize    = data_params[0]
   
   # Hyperparams
   
@@ -62,7 +62,7 @@ def DeconvN(cfg, learning_rate, num_conv_Bulks, kernel_size, activation):
   # Use the Adam method for training the network.
   # We want to find the best learning-rate for the Adam method.
   # TODO: learning rate param
-  optimizer = Adam(lr=1e-3)
+  optimizer = Adam(lr=learning_rate)
   
   # In Keras we need to compile the model so it can be trained.
   model.compile(optimizer=optimizer,

@@ -29,6 +29,7 @@ def create_cfg(dataset_params, model, run_mode):
     cfg.paths.summaries_runBase = os.path.join(cfg.paths.summaries_model, run_mode)
     cfg.paths.summaries_current = cfg.paths.summaries_runBase
     cfg.paths.model             = os.path.join(cfg.paths.best_models, 'best_model.keras')
+    cfg.paths.model_weights     = os.path.join(cfg.paths.best_models, 'best_weights.h5')
 
     # Load Data Fields
     cfg.load = init()
@@ -52,10 +53,10 @@ def create_cfg(dataset_params, model, run_mode):
     cfg.arch.lr = 1e-3
     
     # Restore Model
-#    cfg.restore = init()
-#    cfg.restore.mode = 'last'
-#    cfg.restore.flag = False
-#    cfg.restore.model = None
+    cfg.restore = init()
+    cfg.restore.mode = 'last'
+    cfg.restore.flag = False
+    cfg.restore.model = None
     
     return cfg
 
