@@ -12,5 +12,9 @@ checkpoints/
 summaries/
 logs/
 *.keras
-*.obj
-
+train.obj
+test.obj
+validation.obj
+*.pyc
+*.h5
+*hdf5*
