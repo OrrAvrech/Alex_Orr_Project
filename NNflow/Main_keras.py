@@ -1,7 +1,3 @@
-#import os
-#os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
-#os.environ["CUDA_VISIBLE_DEVICES"]="0"
-
 from skopt import gp_minimize
 from skopt.space import Real, Categorical, Integer
 from skopt.utils import use_named_args
@@ -45,13 +41,14 @@ SaveObj = False
 cfg.data.obj,_,_,_ =  load_dataset(cfg.load.first_sample, cfg.load.numSamples, cfg.paths.dataset, LoadObj, SaveObj)
 
 cfg.exp.batch         = 20  # (default = 1)
-cfg.exp.epochs        = 30 # (default = 10)
+cfg.exp.epochs        = 1000 # (default = 10)
 
 #%% Regular
-if run_mode == 'Regular':    
-    learning_rate = 2e-3
+if run_mode == 'Regular':
+    cfg.restore.flag = True
+    learning_rate = 3.078999840939997e-05
     num_conv_Bulks = 3
-    kernel_size = 3
+    kernel_size = 5
     activation = 'relu'
     accuracy = train.fit_model(cfg, learning_rate, num_conv_Bulks, kernel_size, activation)
 
@@ -70,7 +67,6 @@ if run_mode == 'Optimize':
     dim_learning_rate = Real(low=1e-6, high=1e-2, prior='log-uniform', name='learning_rate')
     dim_num_conv_Bulks = Integer(low=1, high=5, name='num_conv_Bulks')
     dim_num_conv_Layers = Integer(low=1, high=5, name='num_conv_Layers')
-    dim_learning_rate = Real(low=2.3e-3, high=2.5e-3, prior='log-uniform', name='learning_rate')
     dim_kernel_size = Categorical(categories=[3, 5], name='kernel_size')
 
     dim_activation = Categorical(categories=['sigmoid', 'linear', 'relu'], name='activation')
@@ -89,6 +85,5 @@ if run_mode == 'Optimize':
     search_result = gp_minimize(func=train_wrapper,
                                 dimensions=dimensions,
                                 acq_func='EI', # Expected Improvement.
-                                n_calls=56,
+                                n_calls=11,
                                 x0=default_parameters)
-
