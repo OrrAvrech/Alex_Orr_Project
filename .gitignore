@@ -11,6 +11,7 @@ graphs/
 checkpoints/
 summaries/
 logs/
+Papers/
 *.keras
 train.obj
 test.obj

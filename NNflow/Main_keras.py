@@ -66,9 +66,7 @@ if run_mode == 'Optimize':
     # Hyperparams    
     dim_learning_rate = Real(low=1e-6, high=1e-2, prior='log-uniform', name='learning_rate')
     dim_num_conv_Bulks = Integer(low=1, high=5, name='num_conv_Bulks')
-    dim_num_conv_Layers = Integer(low=1, high=5, name='num_conv_Layers')
     dim_kernel_size = Categorical(categories=[3, 5], name='kernel_size')
-
     dim_activation = Categorical(categories=['sigmoid', 'linear', 'relu'], name='activation')
     dim_cfg = Categorical(categories=[cfg], name='cfg')
     default_parameters = [cfg, 2e-3, 1, 3, 'sigmoid']

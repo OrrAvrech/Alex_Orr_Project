@@ -181,3 +181,16 @@ def load_dataset(start_idx, num_samp, path, loadObj, saveObj2file=False):
   end_idx = start_idx + num_samp
   return read_data_sets(path, start_idx, end_idx, loadObj, saveObj2file)
 
+#%% ICA Load
+from scipy.io import loadmat
+
+ICA_File = os.path.join('search_results', 'IC.mat')
+est = loadmat(ICA_File)['IC']
+labelMatchList = [3, 24, 29, 20, 18, 5, 23, 17, 28, 3, 22, 11, 25, 15, 9, 7, 10, 12, 1, 8, 6, 14, 27, 30, 
+                  31, 13, 4, 26, 2, 32, 21, 19]
+labelMatchList[:] = [x - 1 for x in labelMatchList]
+estSorted = np.zeros_like(est)
+estSorted = est[:,:,labelMatchList]
+
+ICA_sorted_File = open(os.path.join('search_results', 'ICA_est.obj'), 'wb')
+pickle.dump(estSorted, ICA_sorted_File, protocol=4)
