@@ -61,7 +61,6 @@ def DeconvN(data_params, learning_rate, num_conv_Bulks, kernel_size, activation)
   
   # Use the Adam method for training the network.
   # We want to find the best learning-rate for the Adam method.
-  # TODO: learning rate param
   optimizer = Adam(lr=learning_rate)
   
   # In Keras we need to compile the model so it can be trained.

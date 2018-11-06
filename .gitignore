@@ -11,6 +11,11 @@ graphs/
 checkpoints/
 summaries/
 logs/
+search_results/
+tf_models/
+best_models/
+MidPresentation/
+.idea/
 Papers/
 *.keras
 train.obj
