@@ -5,6 +5,7 @@
 *.mat
 *.db
 *.pdf
+*.pptx
 *#
 __pycache__/
 graphs/
